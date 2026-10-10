@@ -12,25 +12,16 @@ import hashlib
 import csv
 import json
 import os
+import re
 import zipfile
-import requests
 import numpy as np
 import pandas as pd
 import exchange_calendars as xcals
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from .alpaca_paper import http_session, iter_bar_pages
 
 NY = 'America/New_York'
 FIELDS = ['timestamp', 'symbol', 'open', 'high', 'low', 'close', 'volume']
 FREE_SAMPLE_URL = 'https://historicaldata.net/file/stocks_sample_2022H2.zip'
-
-
-def http_session() -> requests.Session:
-    session = requests.Session()
-    session.mount('https://', HTTPAdapter(max_retries=Retry(
-        total=5, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])))
-    session.headers.update({'User-Agent': 'QC-TRADE-research/2.0'})
-    return session
 
 
 def normalize_minutes(df: pd.DataFrame) -> pd.DataFrame:
@@ -64,11 +55,29 @@ def normalize_minutes(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def read_minute_csv(path: Path) -> pd.DataFrame:
+    """Read 1-minute bars from a CSV, a Parquet file, or a verified cache directory.
+
+    A directory must hold a `manifest.json` written by `qc_trade.fetch`; every
+    partition is SHA-256 checked against it before use (see `dataset.load_dataset`).
+    """
+    path = Path(path)
+    if path.is_dir():
+        from .dataset import load_dataset
+        return normalize_minutes(load_dataset(path))
+    if path.suffix == '.parquet':
+        return normalize_minutes(pd.read_parquet(path))
     return normalize_minutes(pd.read_csv(path))
 
 
 def file_sha256(path: Path, *, chunk_size: int = 1 << 20) -> str:
-    """Hash a large historical CSV without reading it entirely into memory."""
+    """Hash a large historical file without reading it entirely into memory.
+
+    For a cache directory, the hash of its manifest stands for the dataset: the
+    manifest pins the SHA-256 of every partition.
+    """
+    path = Path(path)
+    if path.is_dir():
+        path = path / 'manifest.json'
     hasher = hashlib.sha256()
     with Path(path).open('rb') as fh:
         for chunk in iter(lambda: fh.read(chunk_size), b''):
@@ -92,7 +101,6 @@ def download_alpaca(symbols: list[str], start: str, end: str,
         raise ValueError('feed must be sip or iex')
     if not symbols or len(symbols) != len(set(symbols)):
         raise ValueError('Symbols must be nonempty and unique')
-    import re
     if any(not re.fullmatch(r'[A-Z0-9.\-]{1,16}', sym) for sym in symbols):
         raise ValueError('Invalid stock/ETF ticker name')
     beginning = pd.Timestamp(start)
@@ -117,27 +125,14 @@ def download_alpaca(symbols: list[str], start: str, end: str,
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     partial = out.with_name(out.name + '.partial')
-    seen_tokens = set()
     # Stream page-by-page rather than accumulating millions of records in RAM.
+    # Pagination, backoff and the no-redirect rule live in alpaca_paper.iter_bar_pages.
     with partial.open('w', newline='', encoding='utf-8') as fh:
         writer = csv.DictWriter(fh, fieldnames=FIELDS)
         writer.writeheader()
-        while True:
-            try:
-                # Never forward API headers to a redirected domain.
-                res = sess.get('https://data.alpaca.markets/v2/stocks/bars',
-                               params=params,timeout=45,allow_redirects=False)
-            except requests.RequestException:
-                raise RuntimeError('Could not reach Alpaca market data API; check internet/DNS/firewall.') from None
-            if res.status_code == 401:
-                raise RuntimeError('Alpaca market data HTTP 401: revoked or invalid API credentials.')
-            if res.status_code == 403:
-                raise RuntimeError('Alpaca market data HTTP 403: check SIP/IEX feed entitlement.')
-            if res.status_code != 200:
-                raise RuntimeError(f'Alpaca market data HTTP {res.status_code}; no completed output was written.')
-            payload = res.json()
+        for page in iter_bar_pages(sess, params):
             records = []
-            for symbol, bars in payload.get('bars', {}).items():
+            for symbol, bars in page.items():
                 for b in bars:
                     records.append({'timestamp':b['t'],'symbol':symbol,'open':b['o'],
                                     'high':b['h'],'low':b['l'],'close':b['c'],'volume':b['v']})
@@ -148,13 +143,6 @@ def download_alpaca(symbols: list[str], start: str, end: str,
                     writer.writerow(record)
                 nrows += len(frame)
             pages += 1
-            token = payload.get('next_page_token')
-            if not token:
-                break
-            if token in seen_tokens:
-                raise RuntimeError('Alpaca repeated a pagination token; incomplete download stopped.')
-            seen_tokens.add(token)
-            params['page_token']=token
     if nrows == 0:
         raise ValueError('Alpaca returned zero bars; check timestamps, entitlement and symbols')
     # Only expose a complete file; no credentials appear in data/provenance.
