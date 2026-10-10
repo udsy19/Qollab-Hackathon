@@ -1,7 +1,7 @@
 """Command-line entry point: python -m qc_trade.cli --help."""
 from __future__ import annotations
 import argparse
-from dataclasses import asdict, replace
+from dataclasses import asdict
 from pathlib import Path
 import hashlib
 import json
@@ -13,7 +13,8 @@ from .alpaca_paper import check_paper_and_data, AlpacaConnectionError
 from .audit import audit_results
 from .demo import synthetic_panel
 from .optimizer import OptConfig
-from .backtest import ExecutionConfig,run_backtest,block_bootstrap_paired_excess,METHODS
+from .backtest import (ExecutionConfig,run_backtest,block_bootstrap_paired_excess,METHODS,
+                       cost_stress_grid,run_cost_scenarios)
 from .benchmark import benchmark_solvers
 
 
@@ -54,6 +55,8 @@ def experiment(panel, exec_cfg, opt_cfg, args, *, data_path=None, synthetic=Fals
     results.metrics.to_csv(target/'metrics_oos.csv',index_label='method')
     results.orders.to_csv(target/'orders.csv',index=False)
     results.forecasts.to_csv(target/'forecasts.csv',index=False)
+    results.fills.to_csv(target/'fills.csv',index=False)
+    results.decisions.to_csv(target/'decisions.csv',index=False)
     uncertainty = (block_bootstrap_paired_excess(results.daily_oos_returns,
                    block_days=exec_cfg.block_bootstrap_days,repeats=exec_cfg.bootstrap_reps,
                    seed=exec_cfg.seed) if 'spy' in methods else pd.DataFrame())
@@ -66,19 +69,9 @@ def experiment(panel, exec_cfg, opt_cfg, args, *, data_path=None, synthetic=Fals
         bench.to_csv(target/'solver_benchmark_trials.csv',index=False)
         summary.to_csv(target/'solver_benchmark_summary.csv',index=False)
     if args.stress:
-        stress = []
-        for slip in [float(v) for v in args.stress_bps.split(',')]:
-            if slip < 0:
-                raise ValueError('Stress slippage cannot be negative')
-            stress_cfg = replace(exec_cfg,slippage_bps=slip)
-            altered = run_backtest(panel,stress_cfg,opt_cfg,methods)
-            for method, row in altered.metrics.iterrows():
-                stress.append({'slippage_bps_per_side':slip,'method':method,
-                  'oos_total_return':row['oos_total_return'],
-                  'oos_sharpe_rf0':row['oos_sharpe_rf0'],
-                  'oos_fees_usd':row['oos_fees_usd'],
-                  'trades':row['oos_trades']})
-        pd.DataFrame(stress).to_csv(target/'cost_stress_grid.csv',index=False)
+        cost_stress_grid(panel,exec_cfg,opt_cfg,methods,[float(v) for v in args.stress_bps.split(',')]
+                         ).to_csv(target/'cost_stress_grid.csv',index=False)
+        run_cost_scenarios(panel,exec_cfg,opt_cfg,methods).to_csv(target/'cost_scenarios.csv',index=False)
     save_plot(results.equity,exec_cfg.test_start,target)
     manifest = {'version':'QC-TRADE intraday research v2',
       'created_utc':datetime.now(timezone.utc).isoformat(),
@@ -133,7 +126,8 @@ def main(argv=None):
         b.add_argument('--execution-lag-bars',type=int,default=2)
         b.add_argument('--history-bars',type=int,default=312)
         b.add_argument('--alpha-shrinkage',type=float,default=.3)
-        b.add_argument('--capital',type=float,default=100_000)
+        b.add_argument('--capital',type=float,default=25_000)
+        b.add_argument('--fractional-shares',action='store_true',help='Allow fractional share fills (default: whole shares)')
         b.add_argument('--spread-bps',type=float,default=1.0)
         b.add_argument('--slippage-bps',type=float,default=1.5)
         b.add_argument('--commission-bps',type=float,default=.2)
@@ -147,7 +141,7 @@ def main(argv=None):
         b.add_argument('--anneal-restarts',type=int,default=4)
         b.add_argument('--qaoa-maxiter',type=int,default=80)
         b.add_argument('--qaoa-shots',type=int,default=1024)
-        b.add_argument('--stress',action='store_true',help='Re-run holdout across incremental per-side slippage scenarios')
+        b.add_argument('--stress',action='store_true',help='Re-run holdout with EXTRA per-side slippage (--stress-bps) and the four named cost scenarios')
         b.add_argument('--stress-bps',default='0,1.5,5,10')
         b.add_argument('--benchmark',action='store_true')
         b.add_argument('--snapshots',type=int,default=6)
@@ -178,7 +172,7 @@ def main(argv=None):
     e = ExecutionConfig(test_start=args.test_start,rebalance_minutes=args.rebalance_minutes,
         signal_start_minutes=args.signal_start_minutes,execution_lag_bars=args.execution_lag_bars,
         history_bars=args.history_bars,alpha_shrinkage=args.alpha_shrinkage,
-        starting_capital=args.capital,spread_bps=args.spread_bps,slippage_bps=args.slippage_bps,
+        starting_capital=args.capital,whole_shares=not args.fractional_shares,spread_bps=args.spread_bps,slippage_bps=args.slippage_bps,
         commission_bps=args.commission_bps,impact_bps_at_1pct=args.impact_bps,
         max_participation=args.max_participation)
     o = OptConfig(k=args.k,risk_aversion=args.risk_aversion,min_weight=args.min_weight,

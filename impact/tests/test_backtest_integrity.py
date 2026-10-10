@@ -82,6 +82,24 @@ def test_future_price_perturbation_does_not_change_past(panel, cfg, opt, result,
     assert not result.equity.equals(other.equity)
 
 
+def test_fill_at_a_bar_open_uses_nothing_from_that_bar_but_its_open(panel, cfg, opt, result):
+    """At the instant a bar opens, only its open price is known: not its close, not its volume."""
+    fill_bars = sorted(set(result.fills[~result.fills.forced].bar_index))
+    t = fill_bars[len(fill_bars)//2]
+    cut = panel.close.index[t]
+    rng = np.random.default_rng(5)
+    o, c, v = panel.open.copy(), panel.close.copy(), panel.volume.astype(float)
+    at_or_after, after = panel.close.index >= cut, panel.close.index > cut
+    o.loc[after] *= np.exp(rng.normal(0, .03, (int(after.sum()), o.shape[1])))
+    c.loc[at_or_after] *= np.exp(rng.normal(0, .03, (int(at_or_after.sum()), c.shape[1])))
+    v.loc[at_or_after] *= rng.uniform(.01, 5, (int(at_or_after.sum()), v.shape[1]))
+    other = run_backtest(BarPanel(o, c, v, panel.days, panel.diagnostics), cfg, opt, ALL)
+    upto = cut + pd.Timedelta(seconds=1)
+    a, b = _before(result.fills, 'timestamp_utc', upto), _before(other.fills, 'timestamp_utc', upto)
+    assert (pd.to_datetime(a.timestamp_utc, utc=True) == cut).any()
+    pd.testing.assert_frame_equal(a, b)
+
+
 def test_equity_is_cash_plus_holdings_rebuilt_from_fills(panel, result, cfg):
     """Re-derive NAV from the fill log and market closes, independently of the engine's NAV."""
     symbols = list(panel.close.columns)

@@ -4,11 +4,12 @@
 
 - Strategy: `milp_qubo`
 - OOS NYSE sessions: 10
-- Strategy net return: -1.51%
-- Session-matched intraday SPY net return: -1.21%
-- Arithmetic total return difference: -0.31%
-- Strategy max drawdown: -3.63%
-- 5 bps per-side stress net return: -3.48%
+- Strategy net return: -2.50%
+- Session-matched intraday SPY net return: -1.36%
+- Arithmetic total return difference: -1.15%
+- Strategy max drawdown: -4.13%
+- Net return with 5 bps EXTRA slippage per side: -6.50%
+- Net return by modeled cost scenario: optimistic -1.14%, base -2.50%, conservative -4.73%, severe_stress -12.52%
 - Exploratory paired mean daily excess 95% bootstrap interval (bps): [nan, nan]
 
 ## Prespecified evidence gates
@@ -18,13 +19,14 @@
 - FAIL / UNPROVEN: positive oos net return
 - FAIL / UNPROVEN: higher net return than intraday spy baseline
 - FAIL / UNPROVEN: paired bootstrap 95pct lower above zero bps per day
-- FAIL / UNPROVEN: positive return with 5bps slippage per side
+- FAIL / UNPROVEN: positive return with 5bps extra slippage per side
+- FAIL / UNPROVEN: positive oos net return conservative costs
 
 ## Important limitations
 
 - OOS holdout should be genuinely locked before hyperparameter and universe selection.
 - A single backtest, even if positive, does not predict future returns.
-- Cost assumptions are modeled; quote-level slippage and paper-to-real fills differ.
+- Spread, slippage, impact and fill assumptions are MODELED from OHLCV bars, not observed quotes; quote-level slippage and paper-to-real fills differ.
 - Bootstrap confidence intervals are exploratory; repeated strategy selection is multiple testing.
 - QAOA is ideal classical statevector simulation, NOT quantum hardware speedup.
 - No paper or live orders were placed.

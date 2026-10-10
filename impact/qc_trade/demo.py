@@ -13,6 +13,8 @@ def synthetic_panel(*, start='2026-08-31', end='2026-09-25', seed=22,
     rng = np.random.default_rng(seed)
     n = len(symbols)
     current = 100 + 25*rng.random(n)
+    # Market betas: the original six, then deterministic draws for larger universes.
+    betas = np.r_[[1., 1.2, 1.4, 1.05, -.1, .3], np.random.default_rng(seed+1).uniform(-.2, 1.5, max(0, n-6))][:n]
     open_mat, close_mat, vol_mat, times = [], [], [], []
     for si,day in enumerate(sessions):
         interval = pd.date_range(c.session_open(day),c.session_close(day)-pd.Timedelta(minutes=5),freq='5min')
@@ -23,7 +25,7 @@ def synthetic_panel(*, start='2026-08-31', end='2026-09-25', seed=22,
         for b,ts in enumerate(interval):
             market = rng.normal(base_drift,.0009)
             shocks = rng.normal(0,.0008,n)
-            rets = market*np.array([1.,1.2,1.4,1.05,-.1,.3])[:n] + shocks
+            rets = market*betas + shocks
             if b == 0:
                 rets *= 1.3
             op = current.copy()

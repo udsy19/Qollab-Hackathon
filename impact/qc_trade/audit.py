@@ -26,8 +26,14 @@ def audit_results(out: Path, *, method: str = 'milp_qubo') -> dict:
     ci_lower = float(selected.bootstrap_ci_low_bps.iloc[0]) if len(selected) else np.nan
     ci_upper = float(selected.bootstrap_ci_high_bps.iloc[0]) if len(selected) else np.nan
     stressed = pd.read_csv(out / 'cost_stress_grid.csv')
-    row = stressed[(stressed.method == method) & (np.isclose(stressed.slippage_bps_per_side,5))]
+    row = stressed[(stressed.method == method) & (np.isclose(stressed.extra_slippage_bps_per_side,5))]
     stressed_return = float(row.oos_total_return.iloc[0]) if len(row) else np.nan
+    # A missing scenario table is a failure, never a skip: profitability that
+    # exists only under optimistic frictions must not be classified validated.
+    scenarios = pd.read_csv(out / 'cost_scenarios.csv')
+    by_scenario = scenarios[scenarios.method == method].set_index('scenario').oos_total_return
+    scenario_return = {s: float(by_scenario.get(s, np.nan))
+                       for s in ('optimistic', 'base', 'conservative', 'severe_stress')}
     benchmark = pd.read_csv(out / 'solver_benchmark_summary.csv')
     c = benchmark[(benchmark.method == 'milp_qubo') & (benchmark.n == benchmark.n.max())]
     q = benchmark[(benchmark.method == 'qaoa_xy') & (benchmark.n == benchmark.n.max())]
@@ -38,7 +44,9 @@ def audit_results(out: Path, *, method: str = 'milp_qubo') -> dict:
         'positive_oos_net_return': bool(target.oos_total_return > 0),
         'higher_net_return_than_intraday_spy_baseline': bool(alpha > 0),
         'paired_bootstrap_95pct_lower_above_zero_bps_per_day': bool(np.isfinite(ci_lower) and ci_lower > 0),
-        'positive_return_with_5bps_slippage_per_side': bool(np.isfinite(stressed_return) and stressed_return > 0),
+        'positive_return_with_5bps_extra_slippage_per_side': bool(np.isfinite(stressed_return) and stressed_return > 0),
+        'positive_oos_net_return_conservative_costs': bool(np.isfinite(scenario_return['conservative'])
+                                                           and scenario_return['conservative'] > 0),
     }
     report = {
         'method': method,
@@ -52,7 +60,9 @@ def audit_results(out: Path, *, method: str = 'milp_qubo') -> dict:
         'strategy_oos_max_drawdown': float(target.oos_max_drawdown),
         'strategy_oos_trading_cost_usd': float(target.oos_fees_usd),
         'paired_daily_excess_bootstrap_ci95_bps': [ci_lower, ci_upper],
-        'strategy_net_return_at_5bps_slippage_per_side': stressed_return,
+        'strategy_net_return_at_5bps_extra_slippage_per_side': stressed_return,
+        'cost_scenario_oos_total_return': scenario_return,
+        'severe_stress_oos_total_return': scenario_return['severe_stress'],
         'milp_median_solver_seconds_largest_n': float(c.median_seconds.iloc[0]) if len(c) else None,
         'xy_qaoa_statevector_median_seconds_largest_n': float(q.median_seconds.iloc[0]) if len(q) else None,
         'gates': gates,
@@ -62,7 +72,8 @@ def audit_results(out: Path, *, method: str = 'milp_qubo') -> dict:
         'limitations': [
             'OOS holdout should be genuinely locked before hyperparameter and universe selection.',
             'A single backtest, even if positive, does not predict future returns.',
-            'Cost assumptions are modeled; quote-level slippage and paper-to-real fills differ.',
+            'Spread, slippage, impact and fill assumptions are MODELED from OHLCV bars, not observed quotes; '
+            'quote-level slippage and paper-to-real fills differ.',
             'Bootstrap confidence intervals are exploratory; repeated strategy selection is multiple testing.',
             'QAOA is ideal classical statevector simulation, NOT quantum hardware speedup.',
             'No paper or live orders were placed.',
@@ -85,7 +96,8 @@ def audit_results(out: Path, *, method: str = 'milp_qubo') -> dict:
         f'- Session-matched intraday SPY net return: {pct(float(ref.oos_total_return))}',
         f'- Arithmetic total return difference: {pct(alpha)}',
         f'- Strategy max drawdown: {pct(float(target.oos_max_drawdown))}',
-        f'- 5 bps per-side stress net return: {pct(stressed_return)}',
+        f'- Net return with 5 bps EXTRA slippage per side: {pct(stressed_return)}',
+        '- Net return by modeled cost scenario: ' + ', '.join(f'{k} {pct(v)}' for k, v in scenario_return.items()),
         f'- Exploratory paired mean daily excess 95% bootstrap interval (bps): [{ci_lower:.2f}, {ci_upper:.2f}]',
         '', '## Prespecified evidence gates', '',
     ]
