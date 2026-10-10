@@ -1,6 +1,6 @@
 # Qollab-Hackathon
 
-Two Qiskit projects for the Qollab x IonQ hackathon (Quantum Playground + Quantum Unlocked). Hard rules: `.claude/rules/hackathon-eligibility.md`.
+Three Qiskit projects for the Qollab x IonQ hackathon, one per track: Quantum Impact, Quantum Playground, Quantum Unlocked. Hard rules: `.claude/rules/hackathon-eligibility.md`.
 
 ## How work is organised (agent-org)
 

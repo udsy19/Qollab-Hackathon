@@ -8,7 +8,7 @@ updated: 2026-10-09
 # Qollab-Hackathon — mission control
 
 > [!abstract] The goal
-> **Two Qiskit projects, one Quantum Playground and one Quantum Unlocked, that are runnable on Qollab's IonQ simulator and good enough to win global specialty awards.** Full statement: [[Vision]]. Delivery tracker: [[Roadmap]]. Ordered work:
+> **Three Qiskit projects, one per hackathon track (Quantum Impact, Quantum Playground, Quantum Unlocked), each runnable on Qollab's free simulators including IonQ's, and each good enough to win its track.** Full statement: [[Vision]]. Delivery tracker: [[Roadmap]]. Ordered work:
 > [[Plan]]. The mission in force: [[Missions/qollab-ionq-hackathon-2026]]. What governs the machine that builds it —
 > and what only looks like it does: [[Architecture]].
 >
@@ -26,19 +26,20 @@ not append: superseded NOW text goes to a report under `Reports/`, linked from h
 
 **The bar:** Each project runs end-to-end on Qollab's free simulators (including IonQ's) with no sign-in friction, is MIT-licensed and published with a clear project page, has a 2-3 min demo video at a public link, and would score at the top of all four judging traits (novelty, technical execution, impact, documentation).
 
-| lane | state |
+| track | state |
 |---|---|
-| playground (priority) | researching Qollab runtime + drafting 3 Quantum Playground ideas for the owner — workers `qollab-recon`, `playground-ideas` |
-| unlocked (priority) | researching Qollab runtime + IonQ simulator spike before pitching 3 Quantum Unlocked ideas — workers `qollab-recon`, `ionq-sim-spike` |
-| ux | waiting on picked ideas; researching how Qollab renders output — worker `qollab-render-research` |
-| quality | establishing how Qollab executes projects and a clean-env run recipe — worker `qollab-exec-research` |
-| deliverables | researching the Qollab project-page format — worker `qollab-page-research` |
+| Quantum Impact | waiting on the owner's product vision |
+| Quantum Playground | waiting on the owner's product vision |
+| Quantum Unlocked | waiting on the owner's product vision |
+| repo requirements | done: MIT, attribution, `templates/qollab-project/`, `scripts/gates/qollab-submission.mjs` on the board |
+
+**The org is paused (2026-10-10).** The five setup lanes were stopped and their branches archived to `/Users/udsy/agent-org/archive/lane-branches-2026-10-10.bundle`; GitHub holds only `main` and `backup/lane-state`. Once the owner gives the vision, research agents start, then the lanes are re-cut for three tracks.
 
 ## Next 3 moves
 
-- [ ] playground and unlocked lanes each pitch 3 project ideas to the owner (ASK_OWNER); owner picks one per theme
-- [ ] …
-- [ ] …
+- [ ] The owner gives the product vision for the three tracks (Plan O1)
+- [ ] Research agents, one sweep per track, from that vision
+- [ ] Re-cut the lanes for three tracks and restart them
 
 ## Blockers
 

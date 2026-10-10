@@ -19,13 +19,13 @@ Runtime: **local (tmux on the owner's Mac)** (localhost). Org root: `/Users/udsy
 
 ## Lanes
 
+**Paused 2026-10-10.** The owner is doing all three tracks (Quantum Impact, Quantum Playground, Quantum Unlocked) and gives the product vision next; the lanes are re-cut from it. The five setup lanes (playground, unlocked, ux, quality, deliverables) were stopped before building anything, and their branches are archived in `/Users/udsy/agent-org/archive/lane-branches-2026-10-10.bundle`.
+
+Branch policy (owner, 2026-10-10): lane and worker branches stay local. Only `main` and `backup/lane-state` go to GitHub (`org.json`: `sync.branch_globs: []`, `sync.push_lane_branches: false`).
+
 | lane | goal | root | branches | parallel | may land on main |
 |---|---|---|---|---|---|
-| playground | Pitch 3 Quantum Playground ideas, owner picks; build it into a runnable Qiskit project on the IonQ simulator | /Users/udsy/agent-org/lanes/playground | lane/playground | 2 | yes |
-| unlocked | Pitch 3 Quantum Unlocked ideas, owner picks; build an interactive project that makes a hard quantum idea click | /Users/udsy/agent-org/lanes/unlocked | lane/unlocked | 2 | yes |
-| ux | Demo flow and visuals for both projects, judged by screenshots | /Users/udsy/agent-org/lanes/ux | lane/ux | 1 | no |
-| quality | End-to-end runs on the real simulator path, bug fixing, Qollab runnability | /Users/udsy/agent-org/lanes/quality | lane/quality | 1 | yes |
-| deliverables | Project pages, README/docs, MIT license, demo-video scripts for both | /Users/udsy/agent-org/lanes/deliverables | lane/deliverables | 1 | yes |
+| *to be re-cut for the three tracks once the vision is given* | | | | | |
 
 ## Rulings every lane carries
 

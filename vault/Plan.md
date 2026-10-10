@@ -8,7 +8,7 @@ owner: supervisor
 
 # Plan of record — the ordered work
 
-**The goal** ([[Vision]]): Two Qiskit projects, one Quantum Playground and one Quantum Unlocked, that are runnable on Qollab's IonQ simulator and good enough to win global specialty awards. This file is the ONE ordered list of work.
+**The goal** ([[Vision]]): Three Qiskit projects, one per hackathon track (Quantum Impact, Quantum Playground, Quantum Unlocked), each runnable on Qollab's free simulators including IonQ's, and each good enough to win its track. This file is the ONE ordered list of work.
 Supervisor-owned: a subagent reads its row with `node scripts/plan-row.mjs <id>` and changes
 nothing here — it proposes with `node scripts/propose.mjs`.
 
@@ -53,6 +53,8 @@ Each is one decision only a human can make. Nothing below is an agent's to perfo
 
 | # | the decision | why it blocks | cited |
 |---|---|---|---|
+| O1 | The product vision for each of the three tracks (Impact, Playground, Unlocked) | no project can be defined, researched or built without it; agents do not invent it | owner, 2026-10-10: "ill give you the product vision in a bit" |
+| O2 | Whether the IonQ simulators cost credits for a signed-in account, and if so whether to spend them | eligibility needs a run on IonQ's simulator; the owner ruled "Free simulators only" and the live dialog says "Credits apply" | `vault/Research/qollab-platform-and-submission.md` § 2 |
 
 ## What this plan does NOT include
 

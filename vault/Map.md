@@ -17,7 +17,7 @@ bytes of each note, and fails if it stops being true.
 > next reader can find it. Delete it and nothing but navigation is lost; regenerate it
 > with `node scripts/vault-hubs.mjs`.
 
-Measured 2026-10-10: **33 notes** over 10 folders.
+Measured 2026-10-10: **34 notes** over 10 folders.
 
 
 ## Start here — the vault root
@@ -68,7 +68,7 @@ One note per mission: scope, the lanes serving it, and a definition of done that
 Folder README: [[Missions/README]]
 
 - [[Missions/README|Missions/]]
-- [[Missions/qollab-ionq-hackathon-2026|Mission — Ship two winning Qiskit projects for the Qollab x IonQ hackathon]]
+- [[Missions/qollab-ionq-hackathon-2026|Mission — Ship three winning Qiskit projects for the Qollab x IonQ hackathon, one per track]]
 
 ## `Reports/`
 
@@ -103,6 +103,7 @@ One note per work session, from `Templates/session.md`: what changed, with commi
 Folder README: [[Sessions/README]]
 
 - [[Sessions/2026-10-09-agent-org-setup|2026-10-09 — agent-org-setup]]
+- [[Sessions/2026-10-09-three-tracks|2026-10-09 — three-tracks]]
 - [[Sessions/README|Sessions/]]
 
 ## `Templates/`

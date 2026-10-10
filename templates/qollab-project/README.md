@@ -6,7 +6,7 @@ FILL: one-paragraph hook — what it is and which quantum idea is essential to i
 
 ## What it shows
 
-FILL: the quantum ideas that do real work here (Playground), or the concept this makes click (Unlocked).
+FILL: by track — Impact: the real-world problem and what the quantum + classical pipeline does for it; Playground: the quantum ideas doing real work in something playful; Unlocked: the hard concept this makes click, and how.
 
 ## How to run it
 

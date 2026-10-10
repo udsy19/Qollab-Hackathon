@@ -1,8 +1,8 @@
 ---
 type: dashboard
 status: current
-date: 2026-10-09
-updated: 2026-10-09
+date: 2026-10-10
+updated: 2026-10-10
 ---
 
 # `Missions/`
@@ -16,7 +16,7 @@ One note per mission: scope, the lanes serving it, and a definition of done that
 
 ## Notes here (1)
 
-- [[Missions/qollab-ionq-hackathon-2026|Mission — Ship two winning Qiskit projects for the Qollab x IonQ hackathon]]
+- [[Missions/qollab-ionq-hackathon-2026|Mission — Ship three winning Qiskit projects for the Qollab x IonQ hackathon, one per track]]
 
 ---
 

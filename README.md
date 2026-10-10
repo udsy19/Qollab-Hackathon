@@ -1,6 +1,6 @@
 # Qollab-Hackathon
 
-Our entries for the **Qollab x IonQ Quantum Hackathon** (build window 2026-10-09 19:00 ET to 2026-10-11 19:00 ET): Qiskit projects that run on Qollab's free simulators, including IonQ's.
+Our entries for the **Qollab x IonQ Quantum Hackathon** (build window 2026-10-09 19:00 ET to 2026-10-11 19:00 ET): three Qiskit projects, one per track (Quantum Impact, Quantum Playground, Quantum Unlocked), that run on Qollab's free simulators, including IonQ's.
 
 > The projects are being defined. Each one will live in its own top-level folder, and this page will link to it and to its Qollab page.
 
@@ -8,6 +8,7 @@ Our entries for the **Qollab x IonQ Quantum Hackathon** (build window 2026-10-09
 
 | project | theme | Qollab page | demo video |
 |---|---|---|---|
+| *(to come)* | Quantum Impact | — | — |
 | *(to come)* | Quantum Playground | — | — |
 | *(to come)* | Quantum Unlocked | — | — |
 
