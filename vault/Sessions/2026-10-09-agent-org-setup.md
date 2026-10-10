@@ -29,10 +29,21 @@ Fresh repo (empty folder, empty public GitHub remote `udsy19/Qollab-Hackathon`).
 - Summary shown (lanes table, models, runtime, rules) → owner: "Yes, set it up".
 
 ## What changed
-- Repo layer installed by `init-repo.mjs` (vault, rules, hooks, gates, role cards); `.claude/rules/hackathon-eligibility.md` added for the owner's rulings; `CLAUDE.md` created.
+- `330d145` — repo layer installed by `init-repo.mjs` (vault, rules, hooks, gates, role cards); `.claude/rules/hackathon-eligibility.md` for the owner's rulings; `CLAUDE.md`; loop-guard fixed to match UTC log stamps (it missed every dispatch after UTC midnight west of UTC).
+- `7fdbee9` — `.claude/loop-prompts/org-tracker.md`, the overseer's `/loop` prompt.
+- Org layer at `/Users/udsy/agent-org`: `org.json` (Claude opus-5-5 supervisor; opus default + sonnet workers; 4 h agent timeout), five lanes created and started (`lane-<name>` tmux), `gitsync` tmux, hourly gc + state-snapshot cron. `flock` installed via brew; the event feed runs under Homebrew bash 5 (macOS bash 3.2 lacks `declare -A`).
+- Kit fix: `lanes.sh new` could not find its templates when run from the ORG_ROOT copy; bootstrap now copies `templates/lane` into ORG_ROOT.
+
+## Verified
+- `bash scripts/gates/org-board.sh` → `ORG-BOARD PASS — 16 of 17 row(s) green, 1 skipped` (code map: no graph yet).
+- `plan-ownership.mjs --since main` PASS; `sprawl.mjs --base main` PASS on the setup commit.
+- Every lane logged `=== CONSULT 1` at 2026-10-10 00:49 UTC and dispatched workers (7 running: 2+2+1+1+1).
+- Worker auth probe: OK. `state-snapshot.sh` pushed `backup/lane-state`.
+- Lane branches pushed to origin (13 refs) — by hand; the gitsync loop's own push is still being verified.
+- Still pending: the first worker checkpoint report opening with a Vault check.
 
 ## Decisions taken / proposed
-- Taken (inside my mandate): core lane split into two priority lanes, one per theme; ux does not land on main.
+- Taken (inside my mandate): core lane split into two priority lanes, one per theme; ux does not land on main; setup fast-forwarded onto `main` (lane integration branches are cut from main, and main deploys nothing); agent timeout 4 h instead of 8 h for a 48 h build.
 
 ## Open questions for the owner
 - Which of the 3 pitched ideas per theme to build (arrives via ASK_OWNER).

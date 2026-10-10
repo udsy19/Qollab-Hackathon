@@ -98,6 +98,6 @@ A plan row can name a symbol that lives only on a branch. An agent that trusts `
 > [!warning] This section is NOT graded by `--check`, and everything above it is.
 > It is derived from git branch state, not from the vault, so it changes when a branch is created or deleted anywhere in the repo. Grading it made the gate report STALE for reasons the vault did not cause. Treat the numbers here as of the last regeneration, not as of now; treat a STALE verdict as a real claim about the vault.
 
-**No `main` or `origin/main` resolves**, so unlanded work cannot be measured here.
+**No `lane/*` branch carries a commit origin/main lacks** (checked 12). Everything in flight has landed.
 
 <!-- INDEX:VOLATILE-END -->

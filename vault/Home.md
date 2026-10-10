@@ -28,7 +28,11 @@ not append: superseded NOW text goes to a report under `Reports/`, linked from h
 
 | lane | state |
 |---|---|
-| — | the lanes declared at set-up; one line each, with the evidence path of its latest result |
+| playground (priority) | researching Qollab runtime + drafting 3 Quantum Playground ideas for the owner — workers `qollab-recon`, `playground-ideas` |
+| unlocked (priority) | researching Qollab runtime + IonQ simulator spike before pitching 3 Quantum Unlocked ideas — workers `qollab-recon`, `ionq-sim-spike` |
+| ux | waiting on picked ideas; researching how Qollab renders output — worker `qollab-render-research` |
+| quality | establishing how Qollab executes projects and a clean-env run recipe — worker `qollab-exec-research` |
+| deliverables | researching the Qollab project-page format — worker `qollab-page-research` |
 
 ## Next 3 moves
 
