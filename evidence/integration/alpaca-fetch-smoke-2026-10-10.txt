@@ -1,0 +1,9 @@
+# bash scripts/fetch_real_data.sh smoke   (from impact/ on main c5fe465; paper keys sourced from ~/.config/qc-trade/alpaca-paper.env, never printed)
+# Real, authenticated, read-only. Data written to impact/data/ (gitignored; licensed data is never committed).
+[1/5] paper account authenticated: status=ACTIVE trading_blocked=False  orders submitted: 0
+[2/5] feed entitlement at 2026-10-09: sip=allowed iex=allowed; requested feed: sip
+[3/5] minute bars: 12 symbol-month partitions; downloaded 12, reused 0 verified partition(s)
+[4/5] daily bars for volume cross-check: 126 rows
+[5/5] validation: 21 sessions, 2 rejected (9.52%), 0 flag(s); 5-minute bars kept for 19 sessions
+      rejected per symbol: {'SPY': 0, 'QQQ': 0, 'IWM': 0, 'DIA': 2, 'TLT': 0, 'GLD': 0}; rejected sessions more volatile (p<0.05): none
+SUMMARY: OK mode=smoke feed=sip adjustment=raw symbols=6 window=2026-09-11..2026-10-09 sessions=21 rejected=2 minute_rows=97877 manifest=data/alpaca_smoke_sip_raw_1min/manifest.json sha256=46ed69c45e7e951ba43993a7fffedffbbf375367ffb53e9c1dc92c32b66be7fe orders=0
