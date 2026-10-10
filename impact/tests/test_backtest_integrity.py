@@ -22,7 +22,11 @@ ALL = list(METHODS)
 
 @pytest.fixture(scope='module')
 def panel():
-    return synthetic_panel(start='2026-09-01', end='2026-09-15', symbols=('SPY', 'QQQ', 'IWM', 'DIA'))
+    # The synthetic generator opens every bar at the previous close. Real bars gap,
+    # and a fill at the wrong price is only visible when open != previous close.
+    p = synthetic_panel(start='2026-09-01', end='2026-09-15', symbols=('SPY', 'QQQ', 'IWM', 'DIA'))
+    gap = np.exp(np.random.default_rng(9).normal(0, 3e-4, p.open.shape))
+    return BarPanel(p.open * gap, p.close, p.volume, p.days, p.diagnostics)
 
 
 @pytest.fixture(scope='module')
@@ -131,20 +135,21 @@ def test_whole_shares_by_default(result):
 
 
 def test_fills_are_at_a_later_bar_open_never_the_signal_bar(panel, result, cfg):
+    """Recompute every fill price from the MARKET open and the cost model, not from the log."""
     opens = panel.open.to_numpy(float)
     symbols = list(panel.close.columns)
-    rebal = result.fills[~result.fills.forced]
-    assert len(rebal) > 0
-    for _, row in rebal.iterrows():
+    fills = result.fills
+    assert (~fills.forced).sum() > 0 and fills.forced.sum() > 0
+    for _, row in fills.iterrows():
         j = symbols.index(row.symbol)
-        assert row.bar_index == row.signal_bar + cfg.execution_lag_bars
-        assert row.reference_price == opens[row.bar_index, j]
-        assert row.bar_index > row.signal_bar
-        # buys pay up, sells give up: the fill is never better than the bar open
-        if row.side == 'buy':
-            assert row.fill_price >= row.reference_price
-        else:
-            assert row.fill_price <= row.reference_price
+        if not row.forced:
+            assert row.bar_index == row.signal_bar + cfg.execution_lag_bars > row.signal_bar
+        concession = (cfg.spread_bps/2 + cfg.slippage_bps +
+                      cfg.impact_bps_at_1pct*np.sqrt(row.participation/.01)) * 1e-4
+        sign = 1 if row.side == 'buy' else -1
+        expected = opens[row.bar_index, j] * (1 + sign*concession)
+        assert np.isclose(row.fill_price, expected, rtol=1e-12, atol=0), (row.to_dict(), expected)
+        assert np.isclose(row.commission_usd, cfg.commission_bps*1e-4*row.shares*row.fill_price, rtol=1e-12)
 
 
 def test_flat_at_every_session_end_and_liquidation_is_costed(panel, result):

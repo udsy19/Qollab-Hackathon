@@ -190,7 +190,7 @@ def _execute(shares: np.ndarray, cash: float, target: np.ndarray, px: np.ndarray
         fee = commission * qty * price
         cash += qty * price - fee
         shares[j] -= qty
-        out['fills'].append((j, 'sell', qty, price, fee, participation[j]))
+        out['fills'].append((j, 'sell', qty, price, fee, participation[j], px[j]))
     buys = np.flatnonzero(delta > 0)
     prices = px[buys] * (1 + concession[buys])
     qty = delta[buys]
@@ -205,7 +205,7 @@ def _execute(shares: np.ndarray, cash: float, target: np.ndarray, px: np.ndarray
         fee = commission * q * price
         cash -= q * price + fee
         shares[j] += q
-        out['fills'].append((j, 'buy', q, price, fee, participation[j]))
+        out['fills'].append((j, 'buy', q, price, fee, participation[j], px[j]))
     if cash < -1e-6:
         raise RuntimeError('Ledger went negative: buys exceeded available cash')
     out['shares'], out['cash'] = shares, cash
@@ -322,12 +322,12 @@ def run_backtest(panel: BarPanel, e: ExecutionConfig, o: OptConfig,
                 signal_time = ((times[order_signal_idx]+pd.Timedelta(minutes=5)).isoformat()
                                if order_signal_idx >= 0 else '')
                 cost_usd = 0.0
-                for j, side, qty, price, fee, part in ex['fills']:
-                    slip_usd = qty*abs(price-A_open[t, j])
+                for j, side, qty, price, fee, part, ref in ex['fills']:
+                    slip_usd = qty*abs(price-ref)
                     cost_usd += slip_usd + fee
                     fills.append({'timestamp_utc':current.isoformat(), 'bar_index':t, 'NY_day':days[t],
                                   'method':method, 'symbol':symbols[j], 'side':side, 'shares':float(qty),
-                                  'reference_price':float(A_open[t, j]), 'fill_price':float(price),
+                                  'reference_price':float(ref), 'fill_price':float(price),
                                   'notional_usd':float(qty*price), 'commission_usd':float(fee),
                                   'cost_usd':float(slip_usd+fee), 'participation':float(part),
                                   'forced':forced, 'signal_bar':order_signal_idx, 'signal_time_utc':signal_time})

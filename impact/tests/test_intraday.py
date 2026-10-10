@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import exchange_calendars as xcals
-from qc_trade.data import normalize_minutes, aggregate_5min, BarPanel
+from qc_trade.data import normalize_minutes, aggregate_5min
 from qc_trade.demo import synthetic_panel
 from qc_trade.optimizer import (OptConfig,qubo_matrix,exact_qubo,qubo_energy,
                                   milp_qubo,anneal_qubo,qaoa_statevector,qaoa_xy_statevector,choose,full_exact,
@@ -178,23 +178,6 @@ def test_zero_alpha_spy_benchmark_and_cost_sensitivity(panel):
     assert b.metrics.loc['spy','oos_total_return'] < a.metrics.loc['spy','oos_total_return']
     assert len(a.orders[a.orders['type']=='forced_flat'])>0
     assert a.diagnostics['no_overnight_exposure']
-
-
-def test_future_bar_alteration_does_not_change_old_orders(panel):
-    o=OptConfig(k=2)
-    cfg=ExecutionConfig(test_start='2026-09-09',history_bars=40,max_participation=1.)
-    a=run_backtest(panel,cfg,o,['spy','topk'])
-    cut = pd.Timestamp('2026-09-14T15:00:00Z')
-    # Changed only future data, signals/orders BEFORE change must not move.
-    later = panel.open.index>=cut
-    newopen=panel.open.copy();newclose=panel.close.copy()
-    newopen.loc[later] *= 1.6
-    newclose.loc[later] *= 1.6
-    after=BarPanel(newopen,newclose,panel.volume,panel.days,panel.diagnostics)
-    b=run_backtest(after,cfg,o,['spy','topk'])
-    old_a=a.orders[pd.to_datetime(a.orders.timestamp,utc=True)<cut].reset_index(drop=True)
-    old_b=b.orders[pd.to_datetime(b.orders.timestamp,utc=True)<cut].reset_index(drop=True)
-    pd.testing.assert_frame_equal(old_a,old_b)
 
 
 def test_benchmark_consistent_same_instance(panel):

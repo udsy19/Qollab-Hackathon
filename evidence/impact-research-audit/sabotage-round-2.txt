@@ -1,0 +1,13 @@
+S1 forecast peeks one bar ahead (look-ahead) | test_future_price_perturbation_does_not_change_past | RED (caught) | 1 failed, 2 passed in 5.05s
+S2 participation uses the fill bar's OWN volume/close (same-bar peek) | test_future_price_perturbation_does_not_change_past | GREEN -> NULL RESULT | 3 passed in 5.06s
+S2 participation uses the fill bar's OWN volume/close (same-bar peek) | test_fill_at_a_bar_open_uses_nothing_from_that_bar_but_its_open | RED (caught) | 1 failed in 2.82s
+S3 fill at the PREVIOUS bar close instead of this bar open | test_fills_are_at_a_later_bar_open_never_the_signal_bar | RED (caught) | 1 failed in 1.79s
+S4 commission not debited from cash | test_equity_is_cash_plus_holdings_rebuilt_from_fills | RED (caught) | 1 failed in 1.83s
+S5 buys not limited to cash (leverage allowed) | test_equity_is_cash_plus_holdings_rebuilt_from_fills | RED (caught) | 1 failed in 2.01s
+S6 forced end-of-day liquidation disabled AND engine overnight assertion disabled | test_flat_at_every_session_end_and_liquidation_is_costed | RED (caught) | 1 failed in 1.91s
+S7 contiguity guard removed | test_noncontiguous_panel_is_refused | RED (caught) | 1 failed in 0.67s
+S8 stress grid replaces slippage instead of adding | test_zero_extra_stress_equals_base_and_cost_is_additive | RED (caught) | 1 failed in 0.88s
+S9 conservative-cost gate threshold disabled (always True) | test_audit_never_validates_a_strategy_profitable_only_under_optimistic_costs | RED (caught) | 1 failed in 0.57s
+S10 severe scenario cheaper than conservative | test_four_cost_scenarios_are_ordered | RED (caught) | 1 failed in 0.97s
+S11 TEST transform disabled: perturbation is the identity | test_future_price_perturbation_does_not_change_past | RED (caught) | 1 failed in 3.04s
+S12 fractional shares by default | test_whole_shares_by_default | RED (caught) | 1 failed in 1.66s
