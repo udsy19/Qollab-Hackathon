@@ -263,7 +263,7 @@ def refine(indices: np.ndarray, mu: np.ndarray, cov: np.ndarray, prev: np.ndarra
     return w
 
 
-def full_exact(mu: np.ndarray, cov: np.ndarray, prev: np.ndarray, cfg: OptConfig, max_cases=100) -> np.ndarray:
+def full_exact(mu: np.ndarray, cov: np.ndarray, prev: np.ndarray, cfg: OptConfig, max_cases=2000) -> np.ndarray:
     if comb(len(mu), cfg.k) > max_cases:
         raise ValueError('Too many supports for full continuous enumeration')
     best_w, best_obj = None, float('inf')

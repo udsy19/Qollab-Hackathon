@@ -240,8 +240,8 @@ def summarise(out: Path, plan: list[dict]):
                      'errors': int((g.error != '').sum())})
     summary = pd.DataFrame(rows).sort_values(['regime', 'n', 'method'])
     summary.to_csv(out / 'summary.csv', index=False)
-    not_run = (pd.DataFrame([r for r in plan if r['status'] == 'not_run'])
-               .drop_duplicates(['regime', 'n', 'method'])[['regime', 'n', 'k', 'method', 'reason']])
+    not_run = pd.DataFrame([r for r in plan if r['status'] == 'not_run'],
+                           columns=['regime', 'n', 'k', 'method', 'reason']).drop_duplicates(['regime', 'n', 'method'])
     not_run.to_csv(out / 'not_run.csv', index=False)
     return t, summary, not_run
 
