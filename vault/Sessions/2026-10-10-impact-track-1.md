@@ -33,3 +33,9 @@ Read [[Vision]], [[Plan]], `vault/Research/qollab-platform-and-submission.md`; n
 
 ## Next
 - The owner's answers, then research agents per track.
+
+## Update 17:00 ET — the owner's spec, rulings, and five agents
+- The owner's full QC-TRADE spec saved verbatim: [[Design/impact-qc-trade-spec]].
+- Owner rulings (AskUserQuestion, 2026-10-10): "Qollab slice first (Recommended)"; "Start Track 1 now (Recommended)"; Alpaca data: "I run the download".
+- Owner: "spin up multiple agents in parallel and get it done". Five overseer-dispatched agents, each on its own git worktree with its own files: qollab-qaoa (`impact-qollab/`), research-audit (backtest side of `impact/`), research-solvers (optimizer/benchmark side), research-data (Alpaca pipeline), impact-deliverables (page and video drafts, read-only). Plan rows 3–7.
+- Found: `~/agent-org` now belongs to another org ("ECHO: ONE OF ONE", repo `Qollab-Hackathon-Quantum-Unlocked`); our org was moved to `~/agent-org-qollab-hackathon` (bundle intact in its `archive/`). Not touched; the tmux org is not used for now.

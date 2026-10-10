@@ -26,7 +26,7 @@ Legend: `[x]` done & verified · `[~]` partial / needs more · `[ ]` planned · 
 
 ## Track B — Quantum Impact (real-world problems with quantum + classical computing)
 
-- [ ] Impact: product vision given by the owner and the project defined
+- [~] Impact: product vision given by the owner and the project defined
 - [ ] Impact: runs end-to-end on Qollab's built-in simulator and on an IonQ simulator
 - [ ] Impact: project page, demo video and `qollab-submission.mjs` green; published on Qollab
 
