@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -51,7 +52,9 @@ def _parse(argv):
     p = argparse.ArgumentParser(prog='python -m qc_trade.fetch',
                                 description='Read-only Alpaca historical 1Min download into a verified Parquet cache.')
     p.add_argument('--symbols', default=UNIVERSE)
-    p.add_argument('--start', default='2024-01-01', help='first New York session date, inclusive')
+    p.add_argument('--start', default='2024-01-01',
+                   help='first New York date, inclusive: YYYY-MM-DD, or -Nd = N calendar days before '
+                        'the latest permitted session (write --start=-28d)')
     p.add_argument('--feed', choices=ap.FEEDS, default='sip',
                    help='never switched automatically; a non-entitled feed is a failure')
     p.add_argument('--adjustment', choices=ADJUSTMENTS, default='raw',
@@ -60,6 +63,9 @@ def _parse(argv):
                    help='default: data/alpaca_<mode>_<feed>_<adjustment>_1min (gitignored)')
     p.add_argument('--mode', default='custom', help='label recorded in the manifest (pilot|full)')
     p.add_argument('--page-limit', type=int, default=10000)
+    p.add_argument('--min-minute-bars', type=int, default=5,
+                   help='1-minute bars required per 5-minute bar (1..5); 5 = complete minutes only. '
+                        'Recorded in the manifest; lowering it is a research decision, not a fix')
     p.add_argument('--now', default=None, help='override the clock (tests / reproducing a past run)')
     p.add_argument('--dry-run', action='store_true',
                    help='print every request that would be made; no network, no credentials')
@@ -67,6 +73,8 @@ def _parse(argv):
     a.symbols = [s.strip().upper() for s in a.symbols.split(',') if s.strip()]
     if not a.symbols or len(a.symbols) != len(set(a.symbols)):
         p.error('symbols must be non-empty and unique')
+    if not 1 <= a.min_minute_bars <= 5:
+        p.error('--min-minute-bars must be 1..5')
     if not 1 <= a.page_limit <= 10000:
         p.error('--page-limit must be 1..10000')
     a.cache_dir = Path(a.cache_dir or f'data/alpaca_{a.mode}_{a.feed}_{a.adjustment}_1min')
@@ -79,7 +87,8 @@ def _plan(a):
         now = now.tz_localize('UTC')
     cal = ds.calendar()
     latest, end = ds.download_end(now, cal)
-    start = pd.Timestamp(a.start)
+    rel = re.fullmatch(r'-(\d{1,4})d', a.start.strip())
+    start = (pd.Timestamp(latest.date()) - pd.Timedelta(days=int(rel.group(1)))) if rel else pd.Timestamp(a.start)
     if ds.ny_midnight(start) >= end:
         raise FetchError(f'start {a.start} is not before the latest permitted session {latest.date()}', 2)
     parts = ds.month_partitions(start, end)
@@ -216,9 +225,10 @@ def run(a, sleep=time.sleep) -> int:
     lo = ds.ny_midnight(start)
     minutes = minutes[(minutes.timestamp >= lo) & (minutes.timestamp < end)].reset_index(drop=True)
     validation = ds.validate_minutes(minutes, pd.concat(daily_frames, ignore_index=True), a.symbols,
-                                     start, latest, cal)
+                                     start, latest, cal, min_one_minute_bars=a.min_minute_bars)
     ds.write_json(validation, a.cache_dir / 'validation.json')
-    panel = aggregate_5min(minutes, a.symbols, max_missing_session_fraction=1.0)
+    panel = aggregate_5min(minutes, a.symbols, min_one_minute_bars=a.min_minute_bars,
+                           max_missing_session_fraction=1.0)
     five = ds.five_minute_frame(panel)
     kept = set(five.session)
     expected_kept = {r['session'] for r in validation['sessions']} - set(validation['rejected_sessions'])
@@ -226,13 +236,17 @@ def run(a, sleep=time.sleep) -> int:
         raise FetchError('5-minute reconstruction and the completeness report disagree on '
                          f'{sorted(kept ^ expected_kept)[:5]}; refusing to publish', 1)
     man['bars_5min'] = {'path': 'bars_5min.parquet', 'rows': int(len(five)), 'sessions': len(kept),
-                        'rule': 'data.aggregate_5min: every 5m bar from 5 present 1m bars; '
-                                'any incomplete bucket rejects the session for ALL symbols',
+                        'rule': panel.diagnostics['rejection_policy'],
+                        'min_one_minute_bars': a.min_minute_bars,
                         'sha256': ds.write_parquet(five, a.cache_dir / 'bars_5min.parquet')}
     man['validation'] = {'path': 'validation.json',
                          'sha256': ds.file_sha256(a.cache_dir / 'validation.json'),
                          'expected_sessions': validation['expected_sessions'],
+                         'min_one_minute_bars': a.min_minute_bars,
                          'rejected_session_count': validation['rejected_session_count'],
+                         'per_symbol_rejected': validation['per_symbol_rejected'],
+                         'rejected_more_volatile_p_lt_0_05':
+                             validation['selection_bias']['rejected_more_volatile_p_lt_0_05'],
                          'rejected_fraction': validation['rejected_fraction'],
                          'half_day_sessions': len(validation['half_day_sessions']),
                          'flag_count': len(validation['flags'])}
@@ -243,8 +257,13 @@ def run(a, sleep=time.sleep) -> int:
     print(f'[5/5] validation: {validation["expected_sessions"]} sessions, '
           f'{validation["rejected_session_count"]} rejected ({validation["rejected_fraction"]:.2%}), '
           f'{len(validation["flags"])} flag(s); 5-minute bars kept for {len(kept)} sessions')
-    print(f'dataset ready: {a.cache_dir / "manifest.json"}  sha256={ds.file_sha256(a.cache_dir / "manifest.json")}')
+    print(f'      rejected per symbol: {validation["per_symbol_rejected"]}; rejected sessions more volatile '
+          f'(p<0.05): {validation["selection_bias"]["rejected_more_volatile_p_lt_0_05"] or "none"}')
     print(f'use it: python -m qc_trade.cli backtest --data {a.cache_dir} ...   (no orders were submitted)')
+    print(f'SUMMARY: OK mode={a.mode} feed={a.feed} adjustment={a.adjustment} symbols={len(a.symbols)} '
+          f'window={start.date()}..{latest.date()} sessions={validation["expected_sessions"]} '
+          f'rejected={validation["rejected_session_count"]} minute_rows={len(minutes)} '
+          f'manifest={a.cache_dir / "manifest.json"} sha256={ds.file_sha256(a.cache_dir / "manifest.json")} orders=0')
     return 0
 
 

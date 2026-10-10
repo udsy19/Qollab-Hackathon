@@ -104,6 +104,10 @@ def _get_json(session, *, host: str, path: str, params: dict | None = None,
     if status == 429:
         raise AlpacaConnectionError(
             f'HTTP 429: Alpaca request rate limit still reached after {max_attempts} attempts.', status)
+    if status in RETRY_STATUSES:
+        raise AlpacaConnectionError(
+            f'HTTP {status}: Alpaca server error still returned after {max_attempts} attempts '
+            '(network reachable; retry later). No orders were sent.', status)
     if not 200 <= status < 300:
         raise AlpacaConnectionError(
             f'Alpaca read-only GET failed (HTTP {status}) after {attempt + 1} attempt(s).', status)

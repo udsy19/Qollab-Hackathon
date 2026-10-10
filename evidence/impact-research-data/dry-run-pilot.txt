@@ -1,5 +1,5 @@
 DRY RUN - no network calls, no credentials read, nothing written.
-clock: 2026-10-10T21:07:54.502922+00:00  latest permitted XNYS session: 2026-10-09
+clock: 2026-10-10T21:23:30.703512+00:00  latest permitted XNYS session: 2026-10-09
 window: 2026-04-01 .. 2026-10-09  (UTC 2026-04-01T04:00:00Z .. 2026-10-10T04:00:00Z)
 feed: sip (never switched)  adjustment: raw  symbols: SPY,QQQ,IWM,DIA,TLT,GLD
 cache: data/alpaca_pilot_sip_raw_1min

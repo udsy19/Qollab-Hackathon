@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # READ-ONLY Alpaca historical-data download for QC-TRADE. NEVER places orders.
 #
-#   bash scripts/fetch_real_data.sh pilot|full [--feed sip|iex] [--adjustment raw|split|dividend|all] [--dry-run]
+#   bash scripts/fetch_real_data.sh smoke|pilot|full [--feed sip|iex] [--adjustment raw|split|dividend|all] [--dry-run]
 #
-# pilot: SPY QQQ IWM DIA TLT GLD from 2026-04-01; full: from 2024-01-01; both to the
-# latest XNYS session Alpaca permits. Keys: exported APCA_API_KEY_ID / APCA_API_SECRET_KEY,
+# SPY QQQ IWM DIA TLT GLD to the latest XNYS session Alpaca permits, from:
+#   smoke: 28 calendar days before it (a few minutes; checks the whole path)
+#   pilot: 2026-04-01 (what run_research.sh pilot backtests)
+#   full:  2024-01-01
+# Non-interactive when APCA_API_KEY_ID / APCA_API_SECRET_KEY are exported. The last line
+# of a successful run starts with 'SUMMARY: OK'. Keys: exported APCA_API_KEY_ID / APCA_API_SECRET_KEY,
 # or an echo-off prompt here. Keys live only in this process's environment; they are
 # never written, logged or passed on a command line. --dry-run asks for no keys and
 # makes no network call.
@@ -18,9 +22,10 @@ if ! command -v "$PYTHON_CMD" >/dev/null; then
 fi
 MODE="${1:-}"
 case "$MODE" in
+  smoke) START='-28d' ;;
   pilot) START='2026-04-01' ;;
   full)  START='2024-01-01' ;;
-  *) echo "Usage: bash scripts/fetch_real_data.sh pilot|full [--feed sip|iex] [--adjustment raw|split|dividend|all] [--dry-run]" >&2
+  *) echo "Usage: bash scripts/fetch_real_data.sh smoke|pilot|full [--feed sip|iex] [--adjustment raw|split|dividend|all] [--dry-run]" >&2
      exit 2 ;;
 esac
 shift
@@ -42,13 +47,17 @@ done
 }
 
 CACHE="${QCT_CACHE_ROOT:-data}/alpaca_${MODE}_${FEED}_${ADJ}_1min"
-ARGS=(--mode "$MODE" --start "$START" --feed "$FEED" --adjustment "$ADJ" --cache-dir "$CACHE")
+ARGS=(--mode "$MODE" "--start=$START" --feed "$FEED" --adjustment "$ADJ" --cache-dir "$CACHE")
 
 if [[ "$DRY" == 1 ]]; then
   exec "$PYTHON_CMD" -m qc_trade.fetch "${ARGS[@]}" --dry-run
 fi
 
 # Never paste API credentials into source, command-line arguments, chat, or files.
+if [[ ( -z "${APCA_API_KEY_ID:-}" || -z "${APCA_API_SECRET_KEY:-}" ) && ! -t 0 ]]; then
+  echo "No terminal to prompt on: export APCA_API_KEY_ID and APCA_API_SECRET_KEY (paper keys) first." >&2
+  exit 2
+fi
 if [[ -z "${APCA_API_KEY_ID:-}" ]]; then
   read -r -s -p 'Rotated Alpaca PAPER API key ID: ' APCA_API_KEY_ID
   printf '\n'

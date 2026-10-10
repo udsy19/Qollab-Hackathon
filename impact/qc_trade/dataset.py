@@ -167,13 +167,49 @@ def load_dataset(cache_dir: Path, symbols: list[str] | None = None) -> pd.DataFr
     return pd.concat(frames, ignore_index=True).sort_values(['timestamp', 'symbol']).reset_index(drop=True)
 
 
+def selection_bias(daily: pd.DataFrame | None, symbols: list[str], sessions: list[str],
+                   rejected: dict) -> dict:
+    """Are rejected sessions more volatile than kept ones? (audit finding O6)
+
+    Uses the independent 1Day bars: intraday range (high - low) / close per
+    symbol-session. One-sided Mann-Whitney U, H1: rejected ranges are larger.
+    A small p means dropping incomplete sessions biases the sample towards calm
+    days; it is reported next to the dataset, never corrected silently.
+    """
+    from scipy.stats import mannwhitneyu
+    out = {'measure': '(high - low) / close of the 1Day bar', 'test': 'Mann-Whitney U, one-sided (rejected > kept)',
+           'kept_sessions': len([x for x in sessions if x not in rejected]),
+           'rejected_sessions': len([x for x in sessions if x in rejected]), 'by_symbol': {},
+           'rejected_more_volatile_p_lt_0_05': []}
+    if daily is None or not len(daily):
+        out['note'] = 'no daily bars: not measured'
+        return out
+    dd = daily.copy()
+    dd['session'] = dd['timestamp'].dt.tz_convert(NY).dt.strftime('%Y-%m-%d')
+    dd['range'] = (dd['high'] - dd['low']) / dd['close']
+    for sym in symbols:
+        g = dd[dd.symbol.eq(sym) & dd.session.isin(sessions)]
+        rej = g.loc[g.session.isin(list(rejected)), 'range'].to_numpy(float)
+        kept = g.loc[~g.session.isin(list(rejected)), 'range'].to_numpy(float)
+        p = None
+        if len(rej) and len(kept):
+            p = float(mannwhitneyu(rej, kept, alternative='greater').pvalue)
+        out['by_symbol'][sym] = {'kept_n': int(len(kept)), 'rejected_n': int(len(rej)),
+                                 'kept_mean_range': float(kept.mean()) if len(kept) else None,
+                                 'rejected_mean_range': float(rej.mean()) if len(rej) else None,
+                                 'mannwhitney_p': p}
+        if p is not None and p < 0.05:
+            out['rejected_more_volatile_p_lt_0_05'].append(sym)
+    return out
+
+
 def validate_minutes(minutes: pd.DataFrame, daily: pd.DataFrame | None, symbols: list[str],
-                     first_session, last_session, cal=None) -> dict:
+                     first_session, last_session, cal=None, *, min_one_minute_bars: int = 5) -> dict:
     """Completeness, volume and corporate-action checks for every symbol x XNYS session.
 
     A session is REJECTED for a symbol when it has no regular-hours bars or any
-    5-minute bucket lacks one of its five 1-minute bars: the same rule
-    `data.aggregate_5min` applies with its default min_one_minute_bars=5.
+    5-minute bucket has fewer than `min_one_minute_bars` 1-minute bars: the same
+    rule, with the same parameter, as `data.aggregate_5min`.
     Flags (overnight gaps, daily-volume mismatch, bars on non-session dates) are
     reported, never acted on.
     """
@@ -205,7 +241,7 @@ def validate_minutes(minutes: pd.DataFrame, daily: pd.DataFrame | None, symbols:
             reg = g[(g.timestamp >= o) & (g.timestamp < c)]
             buckets = ((reg.timestamp - o) // pd.Timedelta(minutes=5)).value_counts()
             n_buckets = expected // 5
-            incomplete = n_buckets - int((buckets >= 5).sum())
+            incomplete = n_buckets - int((buckets >= min_one_minute_bars).sum())
             reg_vol = float(reg.volume.sum())
             dvol = daily_vol.get((sym, day))
             ratio = None if not dvol else reg_vol / dvol
@@ -233,14 +269,19 @@ def validate_minutes(minutes: pd.DataFrame, daily: pd.DataFrame | None, symbols:
                                   'note': 'possible unadjusted split/corporate action; inspect'})
                 prev_close = float(reg.close.iloc[-1])
     expected_sessions = len(sessions)
+    names = [str(x.date()) for x in sessions]
     return {
         'calendar': 'XNYS', 'timezone': NY, 'timestamps': 'UTC bar start',
         'first_session': str(sessions[0].date()) if expected_sessions else None,
         'last_session': str(sessions[-1].date()) if expected_sessions else None,
         'expected_sessions': expected_sessions,
         'half_day_sessions': sorted({r['session'] for r in rows if r['expected_minutes'] < 390}),
-        'rejection_rule': 'no regular bars, or any 5-minute bucket missing a 1-minute bar',
+        'min_one_minute_bars': min_one_minute_bars,
+        'rejection_rule': (f'no regular bars, or any 5-minute bucket with fewer than {min_one_minute_bars} '
+                           '1-minute bars; one failing symbol drops the session for all symbols'),
         'rejected_sessions': dict(sorted(rejected.items())),
+        'per_symbol_rejected': {sym: sum(sym in v for v in rejected.values()) for sym in symbols},
+        'selection_bias': selection_bias(daily, symbols, names, rejected),
         'rejected_session_count': len(rejected),
         'rejected_fraction': round(len(rejected) / expected_sessions, 6) if expected_sessions else None,
         'flags': flags,
@@ -271,5 +312,5 @@ def summarize_coverage(minutes: pd.DataFrame) -> dict:
 
 __all__ = ['DatasetIntegrityError', 'Partition', 'bar_request', 'bars_to_frame', 'calendar',
            'download_end', 'file_sha256', 'five_minute_frame', 'latest_permitted_session',
-           'load_dataset', 'month_partitions', 'read_manifest', 'summarize_coverage',
+           'load_dataset', 'month_partitions', 'read_manifest', 'selection_bias', 'summarize_coverage',
            'validate_minutes', 'verify_entry', 'write_json', 'write_parquet']

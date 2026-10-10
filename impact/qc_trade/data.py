@@ -24,6 +24,31 @@ FIELDS = ['timestamp', 'symbol', 'open', 'high', 'low', 'close', 'volume']
 FREE_SAMPLE_URL = 'https://historicaldata.net/file/stocks_sample_2022H2.zip'
 
 
+_OFFSET = r'(?:Z|[+-]\d{2}:?\d{2})$'
+
+
+def parse_timestamps(col: pd.Series) -> pd.Series:
+    """UTC timestamps, deciding time-zone awareness for EVERY row, not the first.
+
+    All rows offset-aware (``Z`` / ``+hh:mm``): each is converted with its own
+    offset, so -05:00 and -04:00 rows on either side of a DST change are both
+    right. All rows naive: they are New York wall-clock times, localized with
+    nonexistent/ambiguous DST times raising. A column mixing the two is refused.
+    """
+    if pd.api.types.is_datetime64_any_dtype(col):
+        if getattr(col.dt, 'tz', None) is not None:
+            return col.dt.tz_convert('UTC')
+        return col.dt.tz_localize(NY, ambiguous='raise', nonexistent='raise').dt.tz_convert('UTC')
+    aware = col.astype(str).str.strip().str.contains(_OFFSET, regex=True)
+    if aware.all():
+        return pd.to_datetime(col, utc=True, format='ISO8601')
+    if aware.any():
+        raise ValueError(f'timestamp column mixes timezone-aware and naive values '
+                         f'({int(aware.sum())} aware, {int((~aware).sum())} naive); refusing to guess')
+    return (pd.to_datetime(col, format='ISO8601')
+            .dt.tz_localize(NY, ambiguous='raise', nonexistent='raise').dt.tz_convert('UTC'))
+
+
 def normalize_minutes(df: pd.DataFrame) -> pd.DataFrame:
     missing = set(FIELDS) - set(df.columns)
     if missing:
@@ -32,12 +57,7 @@ def normalize_minutes(df: pd.DataFrame) -> pd.DataFrame:
     d['symbol'] = d.symbol.astype(str).str.upper().str.strip()
     if (d.symbol.str.len() == 0).any():
         raise ValueError('Empty symbol')
-    probe = pd.to_datetime(d['timestamp'].iloc[0])
-    if probe.tzinfo is None:
-        times = pd.to_datetime(d.timestamp).dt.tz_localize(NY, ambiguous='raise', nonexistent='raise').dt.tz_convert('UTC')
-    else:
-        times = pd.to_datetime(d.timestamp, utc=True)
-    d['timestamp'] = times
+    d['timestamp'] = parse_timestamps(d['timestamp'])
     for key in ('open', 'high', 'low', 'close', 'volume'):
         d[key] = pd.to_numeric(d[key], errors='raise')
     v = d[['open', 'high', 'low', 'close', 'volume']].to_numpy(float)
@@ -192,6 +212,10 @@ def download_public_sample(out: Path, *, symbols=('SPY','KO','TSLA','TWTR')) -> 
     return meta
 
 
+REJECTION_POLICY = ('drop the session for all symbols when any symbol has a 5-minute bucket with fewer '
+                    'than min_one_minute_bars 1-minute bars; no fill, no partial sessions')
+
+
 @dataclass
 class BarPanel:
     open: pd.DataFrame
@@ -204,6 +228,15 @@ class BarPanel:
 def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_bars: int=5,
                    max_missing_session_fraction: float=.15) -> BarPanel:
     """Drop incomplete days rather than fabricating prices or trading through gaps.
+
+    Policy (REJECTION_POLICY): a 5-minute bar needs `min_one_minute_bars` of its
+    five 1-minute bars; a session in which ANY symbol misses one is dropped for
+    ALL symbols, so the panel is aligned and every kept session is the full XNYS
+    5-minute grid (what backtest.validate_panel requires). The cost is selection
+    bias towards calm days; it is measured, not hidden: `rejected_sessions`
+    names every failing symbol with its reason, `per_symbol_completeness` counts
+    them, and the fetch pipeline compares rejected vs kept daily ranges
+    (dataset.selection_bias). Do not lower thresholds to keep more days.
 
     Uses XNYS exchange sessions (holidays + early closes) and UTC keys (DST).
     Timestamps are 5min bar starts, next-bar open is never used in features.
@@ -225,6 +258,7 @@ def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_
     sessions = c.sessions_in_range(begin, finish)
     expected_dates = [str(x.date()) for x in sessions]
     frames, skipped = [], {}
+    complete = {sym: 0 for sym in symbols}
     for session in sessions:
         day = str(session.date())
         day_df = d.loc[d['_session'].eq(day)]
@@ -232,10 +266,9 @@ def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_
         market_close = c.session_close(session)
         labels = pd.date_range(market_open, market_close-pd.Timedelta(minutes=5), freq='5min')
         if day_df.empty:
-            skipped[day] = 'no bars in any candidate asset'
+            skipped[day] = {sym: 'no bars' for sym in symbols}
             continue
-        results = []
-        failed = False
+        results, failures = [], {}
         for sym in symbols:
             bars = day_df.loc[day_df.symbol.eq(sym)].set_index('timestamp').sort_index()
             bars = bars.loc[(bars.index >= market_open) & (bars.index < market_close)]
@@ -245,15 +278,17 @@ def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_
             counts = bars.close.resample('5min', origin=market_open, label='left', closed='left').count()
             valid = counts.reindex(labels, fill_value=0).ge(min_one_minute_bars)
             if not valid.all():
-                skipped[day] = f'{sym}: {int((~valid).sum())} 5m bars incomplete or missing'
-                failed = True
-                break
+                failures[sym] = f'{int((~valid).sum())} of {len(labels)} 5m bars incomplete or missing'
+                continue
+            complete[sym] += 1
             grouped = grouped.reindex(labels)
             grouped['symbol'] = sym
             grouped['timestamp'] = labels
             grouped['_session'] = day
             results.append(grouped.reset_index(drop=True))
-        if not failed:
+        if failures:
+            skipped[day] = failures
+        else:
             frames.extend(results)
     if not frames:
         raise ValueError(f'No complete shared trading sessions. Days rejected: {list(skipped.items())[:4]}; ' +
@@ -276,7 +311,10 @@ def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_
                     {'calendar':'XNYS', 'timezone':'America/New_York',
                      'timeframe':'5Min', 'min_one_minute_bars':min_one_minute_bars,
                      'session_count':len(expected_dates), 'kept_sessions':len(expected_dates)-len(skipped),
-                     'rejected_sessions':skipped,
+                     'rejected_sessions':skipped, 'rejection_policy':REJECTION_POLICY,
+                     'per_symbol_completeness':{sym: {'complete_sessions': complete[sym],
+                                                      'incomplete_sessions': len(expected_dates) - complete[sym]}
+                                                for sym in symbols},
                      'symbols':symbols,'first_utc':ix[0].isoformat(), 'last_utc':ix[-1].isoformat()})
 
 

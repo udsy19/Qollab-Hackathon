@@ -133,7 +133,7 @@ def _run(tmp_path, fake, monkeypatch, *extra, symbols='SPY,QQQ', start='2026-11-
          now='2026-12-01T12:00:00Z'):
     monkeypatch.setattr(ap, 'http_session', lambda: fake)
     sleeps = []
-    argv = ['--symbols', symbols, '--start', start, '--cache-dir', str(tmp_path / 'cache'),
+    argv = ['--symbols', symbols, f'--start={start}', '--cache-dir', str(tmp_path / 'cache'),
             '--now', now, '--page-limit', '700', *extra]
     rc = fetch.main(argv, sleep=sleeps.append)
     return rc, sleeps
@@ -394,6 +394,40 @@ def test_dry_run_shell_entry_point(tmp_path):
     bad = subprocess.run(['bash', str(script), 'live'], env=env, capture_output=True, text=True,
                          stdin=subprocess.DEVNULL, timeout=60)
     assert bad.returncode == 2
+    # no keys and no terminal: a clear failure, never a hang on a prompt
+    nokeys = subprocess.run(['bash', str(script), 'smoke'], env=env, capture_output=True, text=True,
+                            stdin=subprocess.DEVNULL, timeout=60)
+    assert nokeys.returncode == 2 and 'APCA_API_KEY_ID' in nokeys.stderr
+
+
+def test_shell_is_non_interactive_with_exported_keys(tmp_path):
+    """With keys exported, the script must not prompt and must pass them only via the environment."""
+    import os
+    import subprocess
+    script = Path(__file__).resolve().parents[1] / 'scripts' / 'fetch_real_data.sh'
+    stub = tmp_path / 'py'
+    stub.write_text('#!/usr/bin/env bash\n[[ "$1" == -c ]] && exit 0\n'
+                    'echo "ARGS $*"; echo "KEYSET ${APCA_API_KEY_ID:+yes}${APCA_API_SECRET_KEY:+yes}"\n')
+    stub.chmod(0o755)
+    env = dict(os.environ, PYTHON_CMD=str(stub), QCT_CACHE_ROOT=str(tmp_path),
+               APCA_API_KEY_ID=KEY, APCA_API_SECRET_KEY=SECRET)
+    for mode, start in (('smoke', '--start=-28d'), ('pilot', '--start=2026-04-01'), ('full', '--start=2024-01-01')):
+        r = subprocess.run(['bash', str(script), mode], env=env, capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, timeout=60)
+        assert r.returncode == 0, r.stderr
+        assert 'Rotated Alpaca' not in r.stdout + r.stderr
+        assert f'--mode {mode} {start}' in r.stdout and 'KEYSET yesyes' in r.stdout
+        assert KEY not in r.stdout and SECRET not in r.stdout          # never on a command line
+
+
+def test_relative_start_and_one_line_summary(tmp_path, creds, monkeypatch, capsys):
+    rc, _ = _run(tmp_path, FakeAlpaca(), monkeypatch, start='-5d')
+    assert rc == 0
+    man = json.loads((tmp_path / 'cache' / 'manifest.json').read_text())
+    assert man['requested_start'] == '2026-11-25'           # 5 calendar days before 2026-11-30
+    last = capsys.readouterr().out.strip().splitlines()[-1]
+    assert last.startswith('SUMMARY: OK ') and 'sessions=3' in last and 'rejected=0' in last
+    assert 'sha256=' in last and str(tmp_path / 'cache' / 'manifest.json') in last
 
 
 def test_backtest_reads_cache_directory(tmp_path, creds, monkeypatch):
@@ -406,3 +440,114 @@ def test_backtest_reads_cache_directory(tmp_path, creds, monkeypatch):
     assert data.file_sha256(cache) == data.file_sha256(cache / 'manifest.json')
     panel = data.aggregate_5min(minutes, ['SPY', 'QQQ'])
     assert panel.diagnostics['kept_sessions'] == 5
+
+
+# --------------------------------------------------------------------------- audit findings O5-O7
+
+def _row(ts, sym='SPY', p=100.0):
+    return {'timestamp': ts, 'symbol': sym, 'open': p, 'high': p + .1, 'low': p - .1, 'close': p, 'volume': 10}
+
+
+@pytest.mark.parametrize('stamps', [
+    ['2026-07-15T13:30:00Z', '2026-07-15 09:31:00'],          # aware first, naive later
+    ['2026-07-15 09:30:00', '2026-07-15T13:31:00+00:00'],     # naive first, aware later
+    ['2026-07-15T13:30:00Z', '2026-07-15T09:31:00'],          # same layout, offset dropped
+    [pd.Timestamp('2026-07-15T13:30:00Z'), pd.Timestamp('2026-07-15 09:31:00')],   # objects
+])
+def test_o5_mixed_naive_and_aware_timestamps_refused(stamps):
+    from qc_trade.data import normalize_minutes
+    with pytest.raises(ValueError, match='mixes timezone-aware and naive'):
+        normalize_minutes(pd.DataFrame([_row(t) for t in stamps]))
+
+
+def test_o5_every_row_parsed_with_its_own_offset_across_dst():
+    from qc_trade.data import normalize_minutes
+    d = normalize_minutes(pd.DataFrame([_row('2024-03-08T09:30:00-05:00'), _row('2024-03-11T09:30:00-04:00')]))
+    assert list(d.timestamp) == [pd.Timestamp('2024-03-08T14:30:00Z'), pd.Timestamp('2024-03-11T13:30:00Z')]
+    naive = normalize_minutes(pd.DataFrame([_row('2024-03-08 09:30:00'), _row('2024-03-11 09:30:00')]))
+    assert list(naive.timestamp) == list(d.timestamp)
+    with pytest.raises(Exception):   # 02:30 on 2024-03-10 does not exist in New York
+        normalize_minutes(pd.DataFrame([_row('2024-03-10 02:30:00')]))
+
+
+def test_o6_rejections_name_every_symbol_and_policy_is_explicit(tmp_path, creds, monkeypatch):
+    from qc_trade.data import aggregate_5min
+    fake = FakeAlpaca(drop={('QQQ', '2026-11-24T15:02:00Z'), ('SPY', '2026-11-24T16:00:00Z')})
+    rc, _ = _run(tmp_path, fake, monkeypatch)
+    assert rc == 0
+    minutes = ds.load_dataset(tmp_path / 'cache')
+    p = aggregate_5min(minutes, ['SPY', 'QQQ'], max_missing_session_fraction=1.0)
+    rej = p.diagnostics['rejected_sessions']['2026-11-24']
+    assert set(rej) == {'SPY', 'QQQ'}                      # every failing symbol, not the first one
+    assert p.diagnostics['rejection_policy'].startswith('drop the session for all symbols')
+    comp = p.diagnostics['per_symbol_completeness']
+    assert comp['SPY']['incomplete_sessions'] == 1 and comp['SPY']['complete_sessions'] == 4
+    man = json.loads((tmp_path / 'cache' / 'manifest.json').read_text())
+    assert man['validation']['min_one_minute_bars'] == 5
+    assert man['validation']['per_symbol_rejected'] == {'SPY': 1, 'QQQ': 1}
+
+
+def test_o6_min_minute_bars_is_configurable_and_recorded(tmp_path, creds, monkeypatch):
+    fake = FakeAlpaca(drop={('QQQ', '2026-11-24T15:02:00Z')})
+    rc, _ = _run(tmp_path, fake, monkeypatch, '--min-minute-bars', '4')
+    assert rc == 0
+    val = json.loads((tmp_path / 'cache' / 'validation.json').read_text())
+    assert val['rejected_sessions'] == {} and val['min_one_minute_bars'] == 4
+    man = json.loads((tmp_path / 'cache' / 'manifest.json').read_text())
+    assert man['validation']['min_one_minute_bars'] == 4
+    assert man['bars_5min']['sessions'] == 5
+
+
+def test_o6_selection_bias_of_rejected_sessions_is_measured(tmp_path, creds, monkeypatch):
+    fake = FakeAlpaca(drop={('QQQ', '2026-11-24T15:02:00Z')})
+    rc, _ = _run(tmp_path, fake, monkeypatch)
+    assert rc == 0
+    bias = json.loads((tmp_path / 'cache' / 'validation.json').read_text())['selection_bias']
+    assert bias['rejected_sessions'] == 1 and bias['kept_sessions'] == 4
+    assert set(bias['by_symbol']) == {'SPY', 'QQQ'}
+    for b in bias['by_symbol'].values():
+        assert {'kept_mean_range', 'rejected_mean_range', 'mannwhitney_p'} <= set(b)
+
+
+def test_five_minute_panel_passes_backtest_contiguity_check(tmp_path, creds, monkeypatch):
+    from qc_trade.backtest import validate_panel
+    from qc_trade.data import aggregate_5min
+    fake = FakeAlpaca(drop={('QQQ', '2026-11-24T15:02:00Z')})
+    rc, _ = _run(tmp_path, fake, monkeypatch)
+    assert rc == 0
+    p = aggregate_5min(ds.load_dataset(tmp_path / 'cache'), ['SPY', 'QQQ'], max_missing_session_fraction=1.0)
+    validate_panel(p)                                   # half day 2026-11-27 included, 11-24 rejected
+    assert sorted(set(p.days)) == ['2026-11-23', '2026-11-25', '2026-11-27', '2026-11-30']
+
+
+@pytest.mark.parametrize('status,needle', [(503, 'server error'), (500, 'server error'), (429, 'rate limit')])
+def test_o7_retry_exhaustion_is_not_reported_as_connectivity(status, needle):
+    class S(FakeAlpaca):
+        def get(self, url, params=None, timeout=None, allow_redirects=True):
+            self.calls.append(url)
+            return Reply(status)
+    with pytest.raises(ap.AlpacaConnectionError) as e:
+        ap._get_json(S(), host=ap.PAPER_HOST, path='/v2/clock', sleep=lambda s: None)
+    msg = str(e.value)
+    assert needle in msg and 'after 6 attempts' in msg and 'Could not connect' not in msg
+    assert e.value.status == status
+
+
+def test_o7_connection_auth_and_entitlement_are_distinct():
+    import requests
+
+    class Down(FakeAlpaca):
+        def get(self, *a, **k):
+            raise requests.ConnectionError('dns')
+    with pytest.raises(ap.AlpacaConnectionError, match='Could not connect') as e:
+        ap._get_json(Down(), host=ap.PAPER_HOST, path='/v2/clock')
+    assert e.value.status is None
+    for status, needle in ((401, 'credentials'), (403, 'entitlement')):
+        class S(FakeAlpaca):
+            def get(self, *a, **k):
+                return Reply(status)
+        with pytest.raises(ap.AlpacaConnectionError, match=needle):
+            ap._get_json(S(), host=ap.PAPER_HOST, path='/v2/clock', sleep=lambda s: None)
+    # status retries are explicit; the adapter must never turn them into a RetryError
+    retry = ap.http_session().get_adapter('https://x').max_retries
+    assert retry.status == 0 and not retry.status_forcelist
