@@ -77,3 +77,23 @@ Branch `worktree-agent-af390822910e72793`, last commit `0987166`, worktree clean
 | scaling study | agent's run, `impact/outputs/scaling/` | 537 solves, 0 errors, N = 6..100 |
 
 Equivalence: all solvers optimise the same QUBO; the X-mixer QAOA uses a cardinality penalty instead of the hard constraint, at the smallest weight that provably keeps the same optimum (brute-force tested). Audit items O1–O4 are fixed: every QAOA row carries a uniform random k-hot sampler with the same 1,024 shots and the approximation ratio; one shared enumeration cap; a MILP time-out is recorded, not a crash.
+
+## Real-data runs (overseer)
+
+Keys: the owner's Alpaca PAPER pair, stored outside the repo (`~/.config/qc-trade/alpaca-paper.env`, mode 600), sourced in a subshell only for read-only commands, never printed; `git grep` for the key prefixes on every commit found none. Commands and records: `evidence/integration/alpaca-check-2026-10-10.txt` (SIP and IEX allowed, account ACTIVE, 0 orders), `alpaca-fetch-smoke-2026-10-10.txt`, `alpaca-fetch-full-2026-10-10.txt`. The backtest was pre-registered (`impact/PREREGISTRATION_2026-10-10.md`, commit `249aa15`) before any real-data return was computed. The primary run was refused by the data-quality gate and the threshold was not changed; the pre-registered no-DIA run and the real-data solver benchmark ran to completion (`impact/outputs/real_full_noDIA/`, `impact/outputs/real_bench_noDIA/`). Raw prices (`fills.csv`, the Parquet cache) are gitignored.
+
+## Final checks on `main` (`67826d2`)
+
+`evidence/integration/final-checks-67826d2.txt`: 136 tests passed; compile and imports OK; exact = MILP on 20/20 seeded instances; Qollab project run exit 0 with 1 job, `VERIFY-QAOA-CIRCUITS PASS`, `IMPACT-QOLLAB-RUN PASS`; backtest integrity tests 16 passed; demo runs; scaling summary reproduced from the committed trials; Qollab submission gate fails only on the missing video link.
+
+## Merge record
+
+| merge | commit | from |
+|---|---|---|
+| qollab-qaoa | `d385242` | `worktree-agent-a123cc5cc245fd62f` @ `a26edf7` |
+| research-audit | `464a8dd` | `worktree-agent-a555f850f32975121` @ `e771796` |
+| research-data | `c5fe465` | `worktree-agent-ab34ad640e652b34d` @ `4a44651` |
+| research-solvers | `2b6e517` on `integrate/solvers`, then `c85d627` into `main` | `worktree-agent-af390822910e72793` @ `0987166` |
+| real-data results | `efe94b3`, `67826d2` | overseer runs |
+
+Agent worktrees and branches are left in place (not deleted) for recovery; the local tag `checkpoint/pre-integration-2026-10-10` marks the state before integration. Slip recorded earlier: one commit accidentally included the agent worktrees as gitlinks and was pushed; it was fixed forward without a force-push (`.claude/worktrees/` is now gitignored).

@@ -89,11 +89,13 @@ Files: `main.py` (the run and the report), `qctrade/instance.py` (the synthetic 
 
 ## Built during the hackathon / prior work
 
-TO CONFIRM BY OWNER: the QUBO construction, the classical solvers and the stage-B sizing are vendored, with the maths unchanged, from QC-TRADE (`impact/qc_trade/optimizer.py` in the repository below), a prototype written on 2026-10-10 inside the build window that opened on 2026-10-09 at 19:00 ET, with AI-tool assistance. QC-TRADE's QAOA was a NumPy statevector simulation; the Qiskit circuits, the Dicke-state preparation, the angle tuning, the one-job sampling, the synthetic six-ETF instance, the Pyodide-compatible runner and this page are new in this project. No third-party code or tutorial was forked.
+The QUBO construction, the classical solvers and the stage-B sizing are vendored, with the maths unchanged, from QC-TRADE (`impact/qc_trade/optimizer.py` in the repository below), a prototype written on 2026-10-10 inside the build window that opened on 2026-10-09 at 19:00 ET, with AI-tool assistance. QC-TRADE's QAOA was a NumPy statevector simulation; the Qiskit circuits, the Dicke-state preparation, the angle tuning, the one-job sampling, the synthetic six-ETF instance, the Pyodide-compatible runner and this page are new in this project. No third-party code or tutorial was forked.
 
 The two-stage structure (a discrete selection step followed by a continuous allocation step) is adapted from Shinde, Zhu, Shen and Gao, "A quantum computing approach to beam angle optimization" (arXiv:2504.07844; Medical Physics, 2025). That paper chooses proton-therapy beam angles: binary variables select angles and continuous variables set spot intensities. We borrow only the idea of splitting a binary choice from a continuous one; we do not reproduce its method or results. The Dicke-state circuit follows Bärtschi and Eidenbenz, "Deterministic preparation of Dicke states" (2019).
 
 AI tools were used to write code and documentation.
+
+The wider QC-TRADE research in the same repository went further than this page: it ran the full intraday strategy on real Alpaca market data for 2026, out of sample and after modelled costs. It lost money and did significantly worse than simply holding SPY during the same sessions, and classical solvers matched or beat QAOA on every instance measured, up to 100 assets. That report is `docs/impact/FINAL_RESEARCH_REPORT.md` in the repository.
 
 ## Accessibility
 

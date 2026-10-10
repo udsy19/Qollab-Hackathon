@@ -1,0 +1,31 @@
+# Final integration checks on main 67826d2, 2026-10-10 17:59:55 EDT. Python 3.13.0, qiskit 2.5.2
+## 1. full test suite
+136 passed in 14.12s
+rc=0
+## 2. static: byte-compile + every module imports
+compileall OK
+imports OK
+## 3. deterministic classical optimizer verification: exact == MILP == greedy on 20 seeded instances
+exact==MILP energy on 20/20 instances; greedy never below exact
+rc=0
+## 4. quantum simulator smoke: impact-qollab end-to-end + independent circuit checks
+Total run time 1.1 s. Jobs sent to the backend: 1.
+rc=0
+VERIFY-QAOA-CIRCUITS PASS
+IMPACT-QOLLAB-RUN PASS
+## 5. backtest leakage tests
+16 passed in 7.72s
+## 6. end-to-end demonstration (synthetic mechanics demo, labelled NON-EVIDENCE)
+equal            10.0000           -0.0024         -0.4342           -0.0217     71.0000      122.5478
+cash             10.0000            0.0000             NaN            0.0000      0.0000        0.0000
+Saved: /private/tmp/claude-501/-Users-udsy-PycharmProjects-Qollab-Hackathon/08569af0-01b5-4094-81e1-0c1e2cae226d/scratchpad/demo-final
+rc=0
+## 7. benchmark reproduction: scaling summary recomputed from the committed trials
+trading 100  3   milp_qubo     3            1.0  1.000000 exact_enumeration             0.000000          0.000000                  0.000000               0.023641          0.536142       0.543978        0.533214         0.004131    0.536142               0.000000             73.662464       191.299584               8.799811                  1.0                NaN                   NaN                 NaN                  NaN                     NaN                NaN                   NaN       0
+trading 100  3 random_khot     9            1.0  0.000000 exact_enumeration             0.377235          0.644927                  0.540683               3.855113          0.006862       0.012354        0.002787         0.004050         inf               0.127107              1.769472       117.309440               1.726422                  NaN                NaN                   NaN                 NaN                  NaN                     NaN                NaN                   NaN       0
+rc=0
+ M impact/outputs/scaling/manifest.json
+## 8. data pipeline smoke (real, read-only): see alpaca-fetch-smoke-2026-10-10.txt and alpaca-fetch-full-2026-10-10.txt
+## 9. Qollab submission gate
+         README.md has no YouTube demo video link (the only host the page can embed)
+QOLLAB-SUBMISSION FAIL — 1 of 1 project(s)

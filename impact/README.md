@@ -1,5 +1,7 @@
 # QC-TRADE Intraday v2.1 — Alpaca Paper + authenticated historical data
 
+> **Status 2026-10-10 (hackathon build).** Real Alpaca SIP data, 2026 out of sample, after costs: **not profitable and significantly worse than session-flat SPY**; classical solvers matched or beat QAOA on every instance measured. Full results: `docs/impact/FINAL_RESEARCH_REPORT.md` and `docs/impact/BENCHMARK_RESULTS.md` (repo root). Pre-registration: `PREREGISTRATION_2026-10-10.md`. Audit: `AUDIT.md`. The real-data download is `bash scripts/fetch_real_data.sh smoke|pilot|full` (read-only; no orders).
+
 **A reproducible US stocks/ETFs intraday research prototype for net-of-cost out-of-sample alpha testing and quantum-inspired vs classical combinatorial optimization.**
 
 **Status:** The offline test suite passes, and a synthetic end-to-end smoke test has been run. **There are NO independently verified real-data trading results in this delivered archive.** The runtime cannot fetch external licensed minute bars without credentials/network access. The included downloader lets you evaluate real, timestamped historical data on your own machine. Any synthetic metrics are labeled **NON-EVIDENCE**. The program NEVER sends broker orders.
@@ -200,15 +202,16 @@ This software enforces **chronological signal formation and an explicit holdout 
 | Method | Interpretation |
 | --- | --- |
 | `exact_qubo` | Globally exact K-subset enumeration of the QUBO, when tractable |
-| `milp_qubo` | Strong classical **HiGHS MILP** QUBO solver using binary-linear McCormick constraints; records certified MIP gap |
+| `milp_qubo` | Strong classical **HiGHS MILP** QUBO solver: binary-linear McCormick constraints plus RLT cuts; records the certified MIP gap, and a time-out without a gap as uncertified |
 | `greedy` | Classical greedy swap local search |
 | `anneal` | Classical K-hot multi-restart stochastic annealing |
 | `topk` | Simple highest predicted return assets |
 | `full_exact` | Enumerate all supports then solve weights for each; global discrete+continuous reference for small N |
-| `qaoa` | Ideal noiseless QAOA **X mixer** with K-hot penalty and feasible-shot postselection; <=9 assets |
-| `qaoa_xy` | Ideal noiseless QAOA **K-preserving XY ring mixer**, starts uniform over K-hot states; <=9 assets |
+| `qaoa` | **Qiskit** QAOA, **X mixer** with the provably minimal K-hot penalty; simulated with qiskit-aer; decodes the feasible shot with the lowest true energy |
+| `qaoa_xy` | **Qiskit** QAOA, **K-preserving XY ring mixer** from a Dicke state; simulated with qiskit-aer |
+| `random_khot` | Control: uniform random K-hot samples with the same shot budget as QAOA (judge QAOA against this, not just against "found the optimum") |
 
-The `qaoa`/`qaoa_xy` functions run **NumPy statevector simulators on a classical processor**, not genuine quantum hardware and not necessarily Qiskit. Total measured time includes building Q, classical variational optimization, statevector evolution, sampling and continuous weight refinement. Missing hardware overhead (transpilation, Dicke-state preparation, queueing, calibration, noisy shots) means **no hardware advantage is demonstrated**. Unlike the original paper, this v2 uses both exact and MILP classical comparators; these can readily outperform statevector simulations at small K.
+The `qaoa`/`qaoa_xy` methods build **Qiskit** circuits (`qc_trade/qaoa.py`) and simulate them with **qiskit-aer on a classical processor**, not on quantum hardware; a NumPy statevector survives only as the test oracle. Total measured time includes building Q, classical variational optimization, statevector evolution, sampling and continuous weight refinement. Missing hardware overhead (transpilation, Dicke-state preparation, queueing, calibration, noisy shots) means **no hardware advantage is demonstrated**. Unlike the original paper, this v2 uses both exact and MILP classical comparators; these can readily outperform statevector simulations at small K.
 
 Compare: K-hot feasibility %, difference from exact QUBO energy, difference from globally best refined portfolio objective (small N), runtime distribution across fixed seeds, QAOA feasible-shot fraction, parameter evaluations, and scaling as N grows. QUBO gaps close to zero establish **optimization accuracy**, not investment profitability. An end-to-end quantum speedup claim would additionally require real-hardware runtime and suitable classical compute parity.
 

