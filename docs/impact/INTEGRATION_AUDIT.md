@@ -1,0 +1,36 @@
+# Track 1 integration audit
+
+How each agent's work was recovered, checked and merged into `main`, with the commands and exit codes actually run. Recovery point before any integration: local tag `checkpoint/pre-integration-2026-10-10` (on `0601d77`). Nothing was pushed, no IonQ job was sent, no Alpaca call was made, no order exists anywhere in the code.
+
+Environments: Python 3.13.0 venv with qiskit 2.5.2 (Qollab project checks); Python 3.13.0 venv with `impact/requirements.txt` (QC-TRADE tests). Host `python3` is 3.14.6.
+
+## Baseline before integration
+
+| check | command | result |
+|---|---|---|
+| original QC-TRADE tests on `main` (`0601d77`) | `cd impact && python -m pytest -q` (copy via `git archive main impact`) | `28 passed in 15.31s`, exit 0 |
+
+## qollab-qaoa → `impact-qollab/` (Plan row 3)
+
+Branch `worktree-agent-a123cc5cc245fd62f`, last commit `a26edf7`, worktree clean at merge. Merged with `git merge --no-ff --no-commit`, generated vault pages regenerated, committed as `d385242`.
+
+**Independent checks** (my own, not the agent's), run on the merged tree:
+
+| property | how checked | result |
+|---|---|---|
+| Dicke-state preparation (XY initial state) is the uniform superposition of k-hot strings | statevector for (n,k) = (4,2), (6,2), (6,3), (5,1), (6,5) | pass, all five |
+| `_ccry` is a correct doubly controlled RY | algebra: CCX·RY(−θ/2)·CCX·RY(θ/2) = X·RY(−θ/2)·X·RY(θ/2) = RY(θ) on controls 11, identity otherwise; exercised by the Dicke check | correct |
+| QUBO → Ising mapping (x = (1−z)/2; h_i = −S_ii/2 − Σ_{j≠i} S_ij/2; J_ij = S_ij/2) and the cost layer | the cost layer's unitary diagonal equals exp(−iγE(x)) up to a global phase on a random 5-variable QUBO | pass |
+| penalty λ(Σx−k)² without its constant | algebra: λ·11ᵀ − 2kλ·I on the matrix | correct |
+| XY mixer preserves cardinality | 3 layers, random angles: probability outside k-hot = 2.5e−34 | pass |
+| the check can fail | control: one X-mixer layer leaves 0.68 of the probability outside k-hot | fails as it must |
+| equal objectives across solvers | all solvers score the same `E(y) = y'Qy`; the X-mixer QAOA optimises the penalised QUBO but is scored on the unpenalised one, feasible samples only; exact enumeration is ground truth | consistent (see below) |
+| end-to-end run, deterministic example vs exact optimum | `cd impact-qollab && python -c "from main import main; main()"` | exit 0, 1.2 s, "Jobs sent to the backend: 1"; every solver selects IWM+TLT = the exact optimum (gap 0) |
+
+Commands and outputs: `evidence/integration/verify_qaoa_circuits.py` → `VERIFY-QAOA-CIRCUITS PASS` (`evidence/integration/verify_qaoa_circuits.fd5261f.txt`; re-run on the merge, same result); run log `evidence/integration/impact-qollab-run.fd5261f.txt`.
+
+**The agent's own gates, re-run on the merge:** `python scripts/gates/impact-qollab-run.py` → `IMPACT-QOLLAB-RUN PASS` (one `backend.run` per run against a stand-in backend that raises on a second call; every energy and gap recomputed). `node scripts/gates/qollab-submission.mjs impact-qollab` → exit 1, failing only "README.md has no YouTube demo video link" (the video does not exist yet; this row stays red on the org board until the owner records it).
+
+**Formulation notes:** both QAOA variants and all classical solvers share one QUBO. The X mixer adds λ(Σx−k)² with λ = 4·Σ|Q| (QC-TRADE's choice, which makes the feasible optimum the ground state); the XY mixer enforces cardinality exactly, by construction. Stage A (QUBO) scores equal weights, so the QUBO optimum (IWM+TLT) need not be the best portfolio after stage-B sizing (DIA+TLT is, on the default instance); the page states this as a property shared by every solver.
+
+**Not verified:** the Qiskit half has never run under Pyodide (stock Pyodide cannot `micropip install` Qiskit 2.x; Qollab ships its own build), so the run on Qollab itself is unverified; no IonQ run; whether `qiskit-ionq` accepts two circuits in one job.
