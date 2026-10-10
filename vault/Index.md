@@ -12,7 +12,7 @@ updated: 2026-10-10
 > [!note] Signpost only.
 > Every line is the note's own first sentence, unedited. Nothing here is a new claim; if a line reads oddly, the note says it oddly.
 
-Measured 2026-10-10: **23 notes** carrying an answer.
+Measured 2026-10-10: **24 notes** carrying an answer.
 
 ## Promoted lessons — from the lanes
 
@@ -29,10 +29,11 @@ Decisions are law until superseded. Everything else describes; these DECIDE.
 | [[0001-vault-is-mission-control]] | D-0001 — The vault lives in the repo and is mission control | current |  |
 | [[decision]] | D-XXXX — <title> | proposed |  |
 
-## Reports — what was measured  (1)
+## Reports — what was measured  (2)
 
 | note | title | status | date | gist |
 |---|---|---|---|---|
+| [[impact-research-solvers]] | Impact: quantum vs classical solvers for QC-TRADE's Stage  | current | 2026-10-10 | Spec sections 5 and 9 (Design/impact-qc-trade-spec) on branch `worktree-agent-af390822910e72793`. The instances are **sy |
 | [[SESSION-REGISTRY]] | Session registry — one writer per branch | current | 2026-10-09 | 1. A session opening work on a branch **reads this file first**. 2. It then **writes its own declaration** below — sessi |
 
 ## Design — how it should work  (4)

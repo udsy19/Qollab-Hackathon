@@ -183,6 +183,14 @@ def test_same_seed_same_answer(method):
     assert {k: v for k, v in da.items() if k not in timing} == {k: v for k, v in db.items() if k not in timing}
 
 
+def test_stochastic_solvers_seeded_when_budget_is_far_below_search_space():
+    # 16 shots over C(30,6)=593,775 supports: an unseeded sampler returns a different best almost surely.
+    Q = _rand_qubo(30, 77)
+    np.testing.assert_array_equal(random_khot(Q, 6, shots=16, seed=3), random_khot(Q, 6, shots=16, seed=3))
+    assert len({tuple(random_khot(Q, 6, shots=16, seed=s)) for s in range(6)}) > 1
+    np.testing.assert_array_equal(anneal_qubo(Q, 6, 30, 2, seed=3), anneal_qubo(Q, 6, 30, 2, seed=3))
+
+
 def test_greedy_returns_a_true_swap_local_optimum():
     for seed in range(8):
         Q = _rand_qubo(9, 200 + seed)
