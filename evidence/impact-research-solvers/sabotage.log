@@ -1,0 +1,19 @@
+RED    xy mixer sign                  exit=1 1 failed, 20 passed in 0.48s
+RED    x mixer angle                  exit=1 1 failed, 19 passed in 0.47s
+RED    ising J half                   exit=1 1 failed in 0.46s
+RED    penalty too small              exit=1 1 failed, 1 passed in 0.46s
+RED    dicke angle                    exit=1 1 failed, 14 passed in 0.46s
+RED    rlt wrong rhs                  exit=1 1 failed, 21 passed in 0.49s
+RED    anneal delta                   exit=1 1 failed, 47 passed in 1.53s
+RED    greedy delta                   exit=1 1 failed, 43 passed in 1.28s
+RED    random unseeded                exit=1 1 failed, 37 passed in 1.03s
+RED    exact picks worst              exit=1 1 failed, 21 passed in 0.48s
+RED    qaoa decode ignores energy     exit=1 1 failed, 44 passed in 1.30s
+RED    qaoa unseeded                  exit=1 1 failed, 38 passed in 1.16s
+RED    no statevector refusal         exit=1 1 failed, 48 passed in 1.52s
+RED    O4 old gap compare             exit=1 1 failed, 53 passed in 2.07s
+RED    O1 XY baseline over 2^n        exit=1 1 failed, 50 passed in 1.66s
+RED    O1 approx ratio unconditioned  exit=1 1 failed, 49 passed in 1.83s
+RED    O3 cap diverges                exit=1 1 failed, 51 passed in 2.05s
+RED    O3 solver cap 100              exit=1 1 failed, 51 passed in 1.96s
+SABOTAGE 18/18 RED

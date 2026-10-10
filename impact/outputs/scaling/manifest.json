@@ -1,0 +1,75 @@
+{
+  "data": "synthetic (seeded factor model) - computational benchmark, not a trading result",
+  "simulator": "qiskit-aer statevector, ideal, CPU, 1 thread - NOT quantum hardware",
+  "python": "3.12.11",
+  "machine": "macOS-26.5.1-arm64-arm-64bit",
+  "numpy": "2.5.4",
+  "scipy": "1.18.1",
+  "qiskit": "2.5.2",
+  "qiskit_aer": "0.17.2",
+  "sizes": [
+    6,
+    10,
+    15,
+    20,
+    30,
+    50,
+    100
+  ],
+  "instances": 3,
+  "workers": 3,
+  "methods": [
+    "exact_qubo",
+    "milp_qubo",
+    "greedy",
+    "anneal",
+    "random_khot",
+    "qaoa",
+    "qaoa_xy",
+    "full_exact"
+  ],
+  "plan_rows": 672,
+  "trial_rows": 537,
+  "not_run_configs": 21,
+  "config_example": {
+    "trading": {
+      "k": 3,
+      "risk_aversion": 6.0,
+      "min_weight": 0.03,
+      "max_weight": 0.8,
+      "expected_cost_bps": 4.0,
+      "anneal_steps": 500,
+      "anneal_restarts": 4,
+      "qaoa_reps": 2,
+      "qaoa_maxiter": 80,
+      "qaoa_shots": 1024,
+      "milp_time_limit": 60.0,
+      "full_exact_max_cases": 2000,
+      "seed": 0
+    },
+    "hard": {
+      "k": 2,
+      "risk_aversion": 80.26446519735842,
+      "min_weight": 0.03,
+      "max_weight": 0.8,
+      "expected_cost_bps": 4.0,
+      "anneal_steps": 500,
+      "anneal_restarts": 4,
+      "qaoa_reps": 2,
+      "qaoa_maxiter": 80,
+      "qaoa_shots": 1024,
+      "milp_time_limit": 60.0,
+      "full_exact_max_cases": 2000,
+      "seed": 0
+    }
+  },
+  "outputs": [
+    "scaling_trading.png",
+    "scaling_hard.png",
+    "qaoa_amplification.png",
+    "trials.jsonl",
+    "trials.csv",
+    "summary.csv",
+    "not_run.csv"
+  ]
+}

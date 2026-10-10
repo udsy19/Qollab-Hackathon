@@ -1,7 +1,11 @@
 """Reproducible, same-instance QUBO/QAOA/classical comparisons.
 
 This is computational benchmarking, not an estimate of trading alpha.
-QAOA is noiseless exponential statevector simulation. It is NOT IBM hardware.
+QAOA is a Qiskit circuit simulated as an ideal statevector by qiskit-aer on the
+CPU (cost exponential in n). It is NOT quantum hardware. ``random_khot`` draws
+the same number of uniform k-hot samples as QAOA's final sampling: the control
+that shows whether the QAOA circuit adds anything over sampling alone.
+For the scaling study on synthetic instances of growing size see ``scaling.py``.
 """
 from __future__ import annotations
 from dataclasses import replace
@@ -17,7 +21,7 @@ from .optimizer import (OptConfig,choose,full_exact,qubo_matrix,exact_qubo,
 
 def benchmark_solvers(panel: BarPanel, e: ExecutionConfig, o: OptConfig, *,
                       counts: list[int]|None=None, max_snapshots=6, restarts=3,
-                      include_qaoa=True) -> tuple[pd.DataFrame,pd.DataFrame]:
+                      include_qaoa=True, qaoa_max_n=12) -> tuple[pd.DataFrame,pd.DataFrame]:
     """Sample snapshots deterministically throughout OUT-OF-SAMPLE timeline.
 
     Each instance fixes exactly the same mu/Cov/previous holdings for solvers.
@@ -55,15 +59,15 @@ def benchmark_solvers(panel: BarPanel, e: ExecutionConfig, o: OptConfig, *,
                 q = qubo_matrix(mu,cov,prev,config)
                 exact_idx = exact_qubo(q,config.k)
                 best_qubo = qubo_energy(q,exact_idx)
-                true_best = full_exact(mu,cov,prev,config,max_cases=150) if comb(size,config.k)<=150 else None
+                true_best = full_exact(mu,cov,prev,config) if comb(size,config.k)<=config.full_exact_max_cases else None
                 best_full = portfolio_objective(true_best,mu,cov,prev,config) if true_best is not None else np.nan
-                modes = ['exact_qubo','milp_qubo','greedy','anneal','topk']
+                modes = ['exact_qubo','milp_qubo','greedy','anneal','random_khot','topk']
                 if true_best is not None:
                     modes += ['full_exact']
-                if include_qaoa and size <= 9:
+                if include_qaoa and size <= qaoa_max_n:
                     modes += ['qaoa','qaoa_xy']
                 for mode in modes:
-                    trials = restarts if mode in {'anneal','qaoa','qaoa_xy','greedy','exact_qubo','milp_qubo'} else 1
+                    trials = restarts if mode in {'anneal','random_khot','qaoa','qaoa_xy','greedy','exact_qubo','milp_qubo'} else 1
                     for j in range(trials):
                         seed = config.seed + 100_000*size + 1000*snap_idx + 10*(prev_kind=='invested') + j
                         try:
@@ -82,10 +86,17 @@ def benchmark_solvers(panel: BarPanel, e: ExecutionConfig, o: OptConfig, *,
                           'signal_time_utc':(panel.close.index[t]+pd.Timedelta(minutes=5)).isoformat(),
                           'prev_type':prev_kind,'method':mode,'seed':seed,
                           'feasible':good,'seconds_total':detail.get('runtime_seconds',np.nan),
+                          'seconds_construct':detail.get('construct_seconds',np.nan),
+                          'seconds_solve':detail.get('solve_seconds',np.nan),
+                          'seconds_refine':detail.get('refine_seconds',np.nan),
                           'qubo_gap_to_exact':qgap,'portfolio_gap_to_full_exact':gap,
                           'qaoa_feasible_mass':detail.get('qaoa_feasible_mass',np.nan),
                           'qaoa_feasible_shots':detail.get('qaoa_feasible_shots',np.nan),
                           'qaoa_parameter_evals':detail.get('qaoa_evaluations',np.nan),
+                          'qaoa_optimal_mass':detail.get('qaoa_optimal_mass',np.nan),
+                          'uniform_optimal_mass':detail.get('uniform_optimal_mass',np.nan),
+                          'qaoa_approx_ratio':detail.get('qaoa_approx_ratio',np.nan),
+                          'uniform_approx_ratio':detail.get('uniform_approx_ratio',np.nan),
                           'milp_gap':detail.get('milp_gap',np.nan),
                           'milp_certified':detail.get('milp_certified',np.nan),
                           'qaoa_state_dimension':2**size if mode in {'qaoa','qaoa_xy'} else np.nan,
@@ -97,5 +108,9 @@ def benchmark_solvers(panel: BarPanel, e: ExecutionConfig, o: OptConfig, *,
            median_qubo_gap=('qubo_gap_to_exact','median'),
            median_refined_gap=('portfolio_gap_to_full_exact','median'),
            worst_refined_gap=('portfolio_gap_to_full_exact','max'),
-           mean_qaoa_feasible_mass=('qaoa_feasible_mass','mean')))
+           mean_qaoa_feasible_mass=('qaoa_feasible_mass','mean'),
+           median_qaoa_optimal_mass=('qaoa_optimal_mass','median'),
+           median_uniform_optimal_mass=('uniform_optimal_mass','median'),
+           median_qaoa_approx_ratio=('qaoa_approx_ratio','median'),
+           median_uniform_approx_ratio=('uniform_approx_ratio','median')))
     return detailed,summary
