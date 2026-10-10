@@ -1,0 +1,15 @@
+
+REAL HISTORICAL MARKET DATA — OOS RESEARCH, NOT LIVE TRADING
+            oos_sessions  oos_total_return  oos_sharpe_rf0  oos_max_drawdown  oos_trades  oos_fees_usd
+anneal          189.0000           -0.1690         -2.4360           -0.1840   1835.0000     2949.6390
+milp_qubo       189.0000           -0.1690         -2.4363           -0.1840   1837.0000     2945.7730
+exact_qubo      189.0000           -0.1690         -2.4360           -0.1840   1835.0000     2949.6390
+greedy          189.0000           -0.1690         -2.4360           -0.1840   1835.0000     2949.6390
+topk            189.0000           -0.4230         -6.9932           -0.4230   2231.0000     2866.6792
+minvar          189.0000           -0.0855         -2.2681           -0.1208    840.0000     1879.6703
+spy             189.0000           -0.0552         -0.8739           -0.0857    378.0000     1805.0413
+equal           189.0000           -0.0892         -1.5110           -0.1196    529.0000     1776.8780
+cash            189.0000            0.0000             NaN            0.0000      0.0000        0.0000
+Saved: /Users/udsy/PycharmProjects/Qollab-Hackathon/impact/outputs/real_full_noDIA
+$SP/impvenv/bin/python -m qc_trade.cli backtest --data  --test-start  --stres  1743.53s user 229.23s system 133% cpu 24:35.14 total
+noDIA rc=0
