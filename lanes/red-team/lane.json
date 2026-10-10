@@ -1,6 +1,0 @@
-{
-  "name": "red-team",
-  "branch_prefix": "lane/red-team",
-  "max_parallel": 1,
-  "may_land": false
-}
