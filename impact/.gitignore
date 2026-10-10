@@ -4,7 +4,10 @@
 *.key
 *.pem
 /data/
-/outputs/real_*/
+# Real-data RESULTS (metrics, returns, weights, forecasts, costs, equity) are derived and committed.
+# Any file carrying raw market prices stays out: fills.csv holds reference/fill prices (and
+# notional/shares recovers them). Regenerate it from the manifest hash + the pre-registered command.
+/outputs/real_*/fills.csv
 /outputs/etfs_*/
 **/__pycache__/
 **/.pytest_cache/

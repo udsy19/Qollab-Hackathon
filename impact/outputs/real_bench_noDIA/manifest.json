@@ -1,0 +1,224 @@
+{
+  "version": "QC-TRADE intraday research v2",
+  "created_utc": "2026-10-10T21:43:48.140020+00:00",
+  "synthetic_data": false,
+  "real_profitability_claim": false,
+  "data_source": "/Users/udsy/PycharmProjects/Qollab-Hackathon/impact/data/alpaca_full_sip_raw_1min",
+  "data_file_sha256": "c579b58d70a646aed7abdf37e4615b4772483e36c6e63b427dab04d3e856f892",
+  "execution": {
+    "test_start": "2026-01-02",
+    "rebalance_minutes": 30,
+    "signal_start_minutes": 30,
+    "execution_lag_bars": 2,
+    "history_bars": 312,
+    "alpha_shrinkage": 0.3,
+    "starting_capital": 25000,
+    "whole_shares": true,
+    "spread_bps": 1.0,
+    "slippage_bps": 1.5,
+    "commission_bps": 0.2,
+    "impact_bps_at_1pct": 1.0,
+    "max_participation": 0.02,
+    "block_bootstrap_days": 5,
+    "bootstrap_reps": 600,
+    "seed": 77
+  },
+  "optimization": {
+    "k": 2,
+    "risk_aversion": 6.0,
+    "min_weight": 0.03,
+    "max_weight": 0.8,
+    "expected_cost_bps": 4.0,
+    "anneal_steps": 300,
+    "anneal_restarts": 4,
+    "qaoa_reps": 2,
+    "qaoa_maxiter": 80,
+    "qaoa_shots": 1024,
+    "milp_time_limit": 30.0,
+    "full_exact_max_cases": 2000,
+    "seed": 37
+  },
+  "diagnostics": {
+    "symbols": [
+      "SPY",
+      "QQQ",
+      "IWM",
+      "TLT",
+      "GLD"
+    ],
+    "test_start": "2026-01-02",
+    "oos_first_day": "2026-01-02",
+    "oos_last_day": "2026-10-09",
+    "no_overnight_exposure": true,
+    "daily_signal_lookback_excludes_overnight_gaps": true,
+    "fill": "next + 1 5min bar open from signal close",
+    "accounting": "share/cash ledger; equity = cash + shares x close; whole shares",
+    "cost_model": "MODELED from OHLCV, not observed quotes",
+    "data_quality": {
+      "calendar": "XNYS",
+      "timezone": "America/New_York",
+      "timeframe": "5Min",
+      "min_one_minute_bars": 5,
+      "session_count": 696,
+      "kept_sessions": 659,
+      "rejected_sessions": {
+        "2024-01-04": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-01-26": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-02-12": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-02-28": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-03-14": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-03-18": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-03-19": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-04-25": {
+          "GLD": "2 of 78 5m bars incomplete or missing"
+        },
+        "2024-05-13": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-05-21": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-05-30": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-06-24": {
+          "GLD": "2 of 78 5m bars incomplete or missing"
+        },
+        "2024-06-25": {
+          "GLD": "3 of 78 5m bars incomplete or missing"
+        },
+        "2024-06-28": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-07-10": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-07-18": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-08-13": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-08-21": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-08-23": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-08-26": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-09-05": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-09-10": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-09-16": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-12-04": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-12-16": {
+          "GLD": "2 of 78 5m bars incomplete or missing"
+        },
+        "2024-12-17": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-12-23": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-12-27": {
+          "GLD": "2 of 78 5m bars incomplete or missing"
+        },
+        "2024-12-30": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2024-12-31": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2025-02-14": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2025-08-25": {
+          "GLD": "1 of 78 5m bars incomplete or missing"
+        },
+        "2026-05-27": {
+          "TLT": "1 of 78 5m bars incomplete or missing"
+        },
+        "2026-06-12": {
+          "TLT": "1 of 78 5m bars incomplete or missing"
+        },
+        "2026-06-22": {
+          "TLT": "1 of 78 5m bars incomplete or missing"
+        },
+        "2026-07-10": {
+          "TLT": "1 of 78 5m bars incomplete or missing"
+        },
+        "2026-07-17": {
+          "TLT": "1 of 78 5m bars incomplete or missing"
+        }
+      },
+      "rejection_policy": "drop the session for all symbols when any symbol has a 5-minute bucket with fewer than min_one_minute_bars 1-minute bars; no fill, no partial sessions",
+      "per_symbol_completeness": {
+        "SPY": {
+          "complete_sessions": 696,
+          "incomplete_sessions": 0
+        },
+        "QQQ": {
+          "complete_sessions": 696,
+          "incomplete_sessions": 0
+        },
+        "IWM": {
+          "complete_sessions": 696,
+          "incomplete_sessions": 0
+        },
+        "TLT": {
+          "complete_sessions": 691,
+          "incomplete_sessions": 5
+        },
+        "GLD": {
+          "complete_sessions": 664,
+          "incomplete_sessions": 32
+        }
+      },
+      "symbols": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "TLT",
+        "GLD"
+      ],
+      "first_utc": "2024-01-02T14:30:00+00:00",
+      "last_utc": "2026-10-09T19:55:00+00:00"
+    },
+    "methods": [
+      "anneal",
+      "milp_qubo",
+      "exact_qubo",
+      "greedy",
+      "topk",
+      "minvar",
+      "spy",
+      "equal",
+      "cash"
+    ],
+    "signals_oos": 2268
+  },
+  "warning": "No historical positive P&L or quantum advantage is asserted by this program."
+}

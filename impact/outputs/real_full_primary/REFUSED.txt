@@ -1,0 +1,6 @@
+    raise ValueError(f'Rejected {len(skipped)}/{len(expected_dates)} sessions ({share:.1%}), ' +
+                     'above allowed max_missing_session_fraction. Inspect missing bars; do not silently bias sample. ' +
+                     f'Examples: {list(skipped.items())[:6]}')
+ValueError: Rejected 280/696 sessions (40.2%), above allowed max_missing_session_fraction. Inspect missing bars; do not silently bias sample. Examples: [('2024-01-04', {'GLD': '1 of 78 5m bars incomplete or missing'}), ('2024-01-12', {'DIA': '1 of 78 5m bars incomplete or missing'}), ('2024-01-22', {'DIA': '1 of 78 5m bars incomplete or missing'}), ('2024-01-26', {'GLD': '1 of 78 5m bars incomplete or missing'}), ('2024-01-30', {'DIA': '2 of 78 5m bars incomplete or missing'}), ('2024-01-31', {'DIA': '2 of 78 5m bars incomplete or missing'})]
+$SP/impvenv/bin/python -m qc_trade.cli backtest --data  --test-start  --stres  29.71s user 0.56s system 99% cpu 30.337 total
+primary rc=1
