@@ -1,0 +1,4 @@
+# python -m qc_trade.cli check-alpaca --feed sip|iex  (impact/ on main 02a4a6b; keys sourced from ~/.config/qc-trade/alpaca-paper.env, never printed)
+# GET /v2/account, GET /v2/clock (paper-api), GET /v2/stocks/bars SPY 2025-09-10 (data API). Run 2026-10-10 ~17:40 ET.
+feed sip: paper_account_authenticated=true paper_only=true broker_orders_submitted=0 account_status=ACTIVE account_blocked=false trading_blocked=false market_data_authenticated=true probe_bar_count=5  rc=0
+feed iex: paper_account_authenticated=true paper_only=true broker_orders_submitted=0 account_status=ACTIVE account_blocked=false trading_blocked=false market_data_authenticated=true probe_bar_count=5  rc=0

@@ -6,4 +6,5 @@ Reader: the owner and anyone reviewing `docs/impact/INTEGRATION_AUDIT.md`. Each 
 |---|---|---|
 | `verify_qaoa_circuits.py` | the check itself (Dicke state, cost layer, XY cardinality, with a control that must fail) | — |
 | `verify_qaoa_circuits.<sha>.txt` | `PYTHONPATH=. python ../evidence/integration/verify_qaoa_circuits.py` | in file |
+| `alpaca-check-2026-10-10.txt` | read-only Alpaca paper check, SIP and IEX (no secrets, no orders) | `python -m qc_trade.cli check-alpaca --feed sip\|iex` | 0 |
 | `impact-qollab-run.<sha>.txt` | `python -c "from main import main; main()"` | in file |
