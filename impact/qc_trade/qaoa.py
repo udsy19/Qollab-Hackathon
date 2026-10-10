@@ -40,6 +40,12 @@ def cardinality_penalty(Q: np.ndarray) -> float:
     Flipping one bit changes x'Qx by at most r = max_i (|Q_ii| + 2 sum_{j!=i} |Q_ij|).
     A state with |x| = k + d reaches a k-hot state in |d| flips, so its energy is
     at least E* - |d| r; with the penalty P d^2 >= P |d| it is >= E* whenever P >= r.
+
+    This is about 2n times smaller than the imported code's 4 sum|Q|, but it is still
+    the dominant term of the cost Hamiltonian, so after normalisation the feasible
+    energies get small phases and X-mixer QAOA leaks mass to infeasible strings
+    (reported per run as 'qaoa_feasible_mass'). A smaller, heuristic P could leave the
+    penalised optimum infeasible, i.e. change the objective; we keep the provable one.
     """
     A = np.abs(np.asarray(Q, float))
     r = float((A.diagonal() + 2 * (A.sum(axis=1) - A.diagonal())).max())
@@ -196,11 +202,18 @@ def run_qaoa(Q: np.ndarray, k: int, *, reps: int, maxiter: int, shots: int, seed
     best = int(valid[np.argmin(true_energy[valid])])
     selected = np.flatnonzero((best >> np.arange(n)) & 1)
     decode_seconds = perf_counter() - tick
-    # Diagnostics only (never used for decoding): the exact probability of an optimal k-hot string,
-    # against the uniform-sampling probability over the same start space.
-    e_star = true_energy[feasible].min()
+    # Diagnostics only (never used for decoding). Judge the CIRCUIT, not shot luck: the exact
+    # probability of an optimal k-hot string and the approximation ratio of the feasible-conditioned
+    # output, each against a uniform sampler over the same start space with the SAME shot budget
+    # (all 2^n strings for the X mixer, the C(n,k) k-hot strings for the XY mixer).
+    e_star, e_worst = true_energy[feasible].min(), true_energy[feasible].max()
     optimal = feasible & np.isclose(true_energy, e_star, rtol=0, atol=1e-12 + 1e-9 * abs(e_star))
     start_space = (1 << n) if mixer == 'x' else comb(n, k)
+    p_opt, p_uni = float(p[optimal].sum()), float(optimal.sum() / start_space)
+    span = max(e_worst - e_star, 1e-300)
+    pf = p[feasible] / max(p[feasible].sum(), 1e-300)
+    approx = float((e_worst - pf @ true_energy[feasible]) / span)
+    approx_uniform = float((e_worst - true_energy[feasible].mean()) / span)
     return selected, {
         'mixer': 'x_penalty' if mixer == 'x' else 'xy_ring_dicke',
         'qaoa_penalty': penalty,
@@ -208,8 +221,13 @@ def run_qaoa(Q: np.ndarray, k: int, *, reps: int, maxiter: int, shots: int, seed
         'qaoa_feasible_shots': int(len(valid)),
         'qaoa_evaluations': evals,
         'qaoa_success': bool(fit.success),
-        'qaoa_optimal_mass': float(p[optimal].sum()),
-        'uniform_optimal_mass': float(optimal.sum() / start_space),
+        'qaoa_optimal_mass': p_opt,
+        'uniform_optimal_mass': p_uni,
+        'qaoa_p_hit_in_shots': float(1 - (1 - p_opt) ** shots),
+        'uniform_p_hit_in_shots': float(1 - (1 - p_uni) ** shots),
+        'qaoa_approx_ratio': approx,
+        'uniform_approx_ratio': approx_uniform,
+        'qaoa_params': ';'.join(f'{v:.17g}' for v in fit.x),  # betas then gammas: reproduce the final state
         'qaoa_qubits': n,
         'qaoa_depth': int(compiled.depth()),
         'qaoa_multiqubit_gates': int(sum(1 for inst in qc.data

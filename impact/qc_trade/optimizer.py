@@ -41,6 +41,7 @@ class OptConfig:
     qaoa_maxiter: int = 80
     qaoa_shots: int = 1024
     milp_time_limit: float = 30.0
+    full_exact_max_cases: int = 2000  # ONE cap: the benchmark reference and choose('full_exact') both use it
     seed: int = 37
 
 
@@ -263,8 +264,9 @@ def refine(indices: np.ndarray, mu: np.ndarray, cov: np.ndarray, prev: np.ndarra
     return w
 
 
-def full_exact(mu: np.ndarray, cov: np.ndarray, prev: np.ndarray, cfg: OptConfig, max_cases=2000) -> np.ndarray:
-    if comb(len(mu), cfg.k) > max_cases:
+def full_exact(mu: np.ndarray, cov: np.ndarray, prev: np.ndarray, cfg: OptConfig) -> np.ndarray:
+    """Full-objective reference: refine EVERY k-support and keep the best (true portfolio optimum)."""
+    if comb(len(mu), cfg.k) > cfg.full_exact_max_cases:
         raise ValueError('Too many supports for full continuous enumeration')
     best_w, best_obj = None, float('inf')
     for support in combinations(range(len(mu)), cfg.k):

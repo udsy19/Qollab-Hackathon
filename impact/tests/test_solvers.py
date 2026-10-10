@@ -229,3 +229,65 @@ def test_scaling_plan_refuses_statevector_qaoa_beyond_limit_with_reason():
     assert by[(100, 'qaoa_xy')]['status'] == 'not_run'
     assert by[(100, 'milp_qubo')]['status'] == 'run'
     assert by[(100, 'exact_qubo')]['status'] == 'not_run' and 'C(100,20)' in by[(100, 'exact_qubo')]['reason']
+
+
+# ---------------------------------------------------------------- audit findings O1, O3, O4 (research-audit)
+@pytest.mark.parametrize('mixer', ['x', 'xy'])
+def test_qaoa_reports_same_shot_uniform_baseline_and_approx_ratio(mixer):
+    """O1: a QAOA row must carry the uniform sampler's numbers for the SAME shot budget."""
+    n, k, shots = 7, 3, 50
+    Q = _rand_qubo(n, 41)
+    _, d = run_qaoa(Q, k, reps=2, maxiter=20, shots=shots, seed=2, mixer=mixer)
+    E = np.array([qubo_energy(Q, np.array(s)) for s in combinations(range(n), k)])
+    space = (1 << n) if mixer == 'x' else comb(n, k)
+    n_opt = int(np.isclose(E, E.min()).sum())
+    assert np.isclose(d['uniform_optimal_mass'], n_opt / space)
+    assert np.isclose(d['uniform_p_hit_in_shots'], 1 - (1 - n_opt / space) ** shots)
+    assert np.isclose(d['qaoa_p_hit_in_shots'], 1 - (1 - d['qaoa_optimal_mass']) ** shots)
+    assert np.isclose(d['uniform_approx_ratio'], (E.max() - E.mean()) / (E.max() - E.min()))
+    # Recompute the circuit's own numbers independently from the reported angles.
+    Q_cost = penalised_qubo(Q, k, cardinality_penalty(Q)) if mixer == 'x' else Q
+    qc, betas, gammas, _, _ = qaoa_circuit(Q_cost, k, 2, mixer)
+    params = [float(v) for v in d['qaoa_params'].split(';')]
+    p = Statevector(qc.assign_parameters(dict(zip(list(betas) + list(gammas), params)))).probabilities()
+    idx = [sum(1 << i for i in s) for s in combinations(range(n), k)]
+    pf = p[idx] / p[idx].sum()
+    assert np.isclose(d['qaoa_feasible_mass'], p[idx].sum(), atol=1e-9)
+    assert np.isclose(d['qaoa_optimal_mass'], p[idx][np.isclose(E, E.min())].sum(), atol=1e-9)
+    assert np.isclose(d['qaoa_approx_ratio'], (E.max() - pf @ E) / (E.max() - E.min()), atol=1e-9)
+
+
+def test_full_exact_cap_is_one_number_for_reference_and_solver():
+    """O3: C(10,3)=120 was refused by choose('full_exact') (cap 100) while the benchmark reference allowed 150."""
+    import inspect
+    from qc_trade import benchmark
+    inst = make_instance(10, 3, seed=0, regime='trading')
+    w, _ = choose('full_exact', inst['mu'], inst['cov'], inst['prev'], inst['cfg'], seed=0)
+    assert np.count_nonzero(w > 1e-9) == 3
+    assert 'max_cases=' not in inspect.getsource(benchmark.benchmark_solvers)
+
+
+def test_milp_time_out_is_recorded_not_crashed():
+    """O4: HiGHS hitting its time limit must return an UNCERTIFIED answer or a clear RuntimeError."""
+    inst = make_instance(100, 20, seed=0, regime='hard')
+    Q = qubo_matrix(inst['mu'], inst['cov'], inst['prev'], inst['cfg'])
+    try:
+        sel, info = milp_qubo(Q, 20, time_limit=0.05)
+    except RuntimeError as err:
+        assert 'no feasible' in str(err)
+        return
+    assert len(sel) == 20 and not info['milp_certified'] and 'milp_gap' in info
+
+
+def test_milp_incumbent_without_gap_is_uncertified_not_typeerror(monkeypatch):
+    """O4 exactly: HiGHS returns a solution but mip_gap=None (time limit, no bound)."""
+    from scipy.optimize import OptimizeResult
+    from qc_trade import optimizer
+    Q = _rand_qubo(6, 50)
+
+    def fake_milp(c, **kw):
+        x = np.zeros(len(c)); x[:2] = 1
+        return OptimizeResult(x=x, success=False, mip_gap=None, mip_node_count=None, message='Time limit reached')
+    monkeypatch.setattr(optimizer, 'milp', fake_milp)
+    sel, info = optimizer.milp_qubo(Q, 2)
+    assert list(sel) == [0, 1] and info['milp_certified'] is False and np.isnan(info['milp_gap'])

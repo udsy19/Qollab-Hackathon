@@ -34,13 +34,13 @@ from multiprocessing import get_context
 from pathlib import Path
 from time import perf_counter
 import numpy as np
+from .optimizer import OptConfig
 
 SIZES = [6, 10, 15, 20, 30, 50, 100]
 REGIMES = ['trading', 'hard']
 METHODS = ['exact_qubo', 'milp_qubo', 'greedy', 'anneal', 'random_khot', 'qaoa', 'qaoa_xy', 'full_exact']
 STOCHASTIC = {'anneal', 'random_khot', 'qaoa', 'qaoa_xy'}
 EXACT_CAP = 1_000_000          # supports enumerated by exact_qubo
-FULL_EXACT_CAP = 2_000         # supports each refined by SLSQP for the full-objective reference
 QAOA_RUN_MAX_N = 20            # largest statevector QAOA actually run (time budget, see reason())
 MEMORY_BUDGET_GB = 4.0         # owner's cap for this shared laptop
 SEC_PER_EVAL_N20 = 0.43        # measured: one Aer statevector evaluation, n=20, p=2, 1 thread
@@ -52,7 +52,6 @@ def k_for(n: int, regime: str) -> int:
 
 def make_instance(n: int, k: int, seed: int, regime: str) -> dict:
     """Seeded synthetic 30-minute-horizon instance: 1 market + 4 sector factors + idiosyncratic risk."""
-    from .optimizer import OptConfig
     rng = np.random.default_rng([seed, n, k, REGIMES.index(regime)])
     beta = rng.uniform(.6, 1.4, n)
     sector = rng.integers(0, 4, n)
@@ -79,8 +78,8 @@ def reason(n: int, k: int, method: str) -> str | None:
     """Why a configuration is NOT run, or None if it is."""
     if method == 'exact_qubo' and comb(n, k) > EXACT_CAP:
         return f'C({n},{k})={comb(n, k):.3g} supports exceeds the {EXACT_CAP:.0e} enumeration cap'
-    if method == 'full_exact' and comb(n, k) > FULL_EXACT_CAP:
-        return f'C({n},{k})={comb(n, k):.3g} SLSQP refinements exceeds the {FULL_EXACT_CAP} cap'
+    if method == 'full_exact' and comb(n, k) > OptConfig.full_exact_max_cases:
+        return f'C({n},{k})={comb(n, k):.3g} SLSQP refinements exceeds the {OptConfig.full_exact_max_cases} cap'
     if method in {'qaoa', 'qaoa_xy'} and n > QAOA_RUN_MAX_N:
         gb = (1 << n) * 16 / 1e9
         if gb > MEMORY_BUDGET_GB:
@@ -237,6 +236,10 @@ def summarise(out: Path, plan: list[dict]):
                      'qaoa_optimal_mass': g['qaoa_optimal_mass'].median() if 'qaoa_optimal_mass' in g else np.nan,
                      'uniform_optimal_mass': g['uniform_optimal_mass'].median() if 'uniform_optimal_mass' in g else np.nan,
                      'qaoa_feasible_mass': g['qaoa_feasible_mass'].median() if 'qaoa_feasible_mass' in g else np.nan,
+                     'qaoa_p_hit_in_shots': g['qaoa_p_hit_in_shots'].median() if 'qaoa_p_hit_in_shots' in g else np.nan,
+                     'uniform_p_hit_in_shots': g['uniform_p_hit_in_shots'].median() if 'uniform_p_hit_in_shots' in g else np.nan,
+                     'qaoa_approx_ratio': g['qaoa_approx_ratio'].median() if 'qaoa_approx_ratio' in g else np.nan,
+                     'uniform_approx_ratio': g['uniform_approx_ratio'].median() if 'uniform_approx_ratio' in g else np.nan,
                      'errors': int((g.error != '').sum())})
     summary = pd.DataFrame(rows).sort_values(['regime', 'n', 'method'])
     summary.to_csv(out / 'summary.csv', index=False)
