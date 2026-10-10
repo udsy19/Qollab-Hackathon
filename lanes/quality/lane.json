@@ -1,0 +1,6 @@
+{
+  "name": "quality",
+  "branch_prefix": "lane/quality",
+  "max_parallel": 1,
+  "may_land": true
+}

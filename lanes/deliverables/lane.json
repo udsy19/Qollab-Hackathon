@@ -1,0 +1,6 @@
+{
+  "name": "deliverables",
+  "branch_prefix": "lane/deliverables",
+  "max_parallel": 1,
+  "may_land": true
+}

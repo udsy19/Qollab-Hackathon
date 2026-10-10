@@ -1,0 +1,6 @@
+{
+  "name": "playground",
+  "branch_prefix": "lane/playground",
+  "max_parallel": 2,
+  "may_land": true
+}

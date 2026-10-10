@@ -1,0 +1,6 @@
+{
+  "name": "ux",
+  "branch_prefix": "lane/ux",
+  "max_parallel": 1,
+  "may_land": false
+}

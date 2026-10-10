@@ -1,0 +1,6 @@
+{
+  "name": "unlocked",
+  "branch_prefix": "lane/unlocked",
+  "max_parallel": 2,
+  "may_land": true
+}
