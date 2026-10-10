@@ -1,7 +1,7 @@
 # evidence/impact-research-data
 
 Agent `research-data`, 2026-10-10. Read-only Alpaca historical-data pipeline for `impact/` (QC-TRADE).
-No file here touched the network or used a real credential.
+Reader: `docs/impact/INTEGRATION_AUDIT.md` (§ research-data), which cites these files. No file here touched the network or used a real credential.
 
 | file | produced by | what it shows |
 |---|---|---|
