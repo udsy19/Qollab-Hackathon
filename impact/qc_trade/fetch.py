@@ -57,7 +57,7 @@ def _parse(argv):
     p.add_argument('--adjustment', choices=ADJUSTMENTS, default='raw',
                    help='Alpaca corporate-action adjustment; raw = tradable prices (see README)')
     p.add_argument('--cache-dir', default=None,
-                   help='default: data/alpaca_<feed>_<adjustment>_1min (gitignored)')
+                   help='default: data/alpaca_<mode>_<feed>_<adjustment>_1min (gitignored)')
     p.add_argument('--mode', default='custom', help='label recorded in the manifest (pilot|full)')
     p.add_argument('--page-limit', type=int, default=10000)
     p.add_argument('--now', default=None, help='override the clock (tests / reproducing a past run)')
@@ -69,7 +69,7 @@ def _parse(argv):
         p.error('symbols must be non-empty and unique')
     if not 1 <= a.page_limit <= 10000:
         p.error('--page-limit must be 1..10000')
-    a.cache_dir = Path(a.cache_dir or f'data/alpaca_{a.feed}_{a.adjustment}_1min')
+    a.cache_dir = Path(a.cache_dir or f'data/alpaca_{a.mode}_{a.feed}_{a.adjustment}_1min')
     return a
 
 

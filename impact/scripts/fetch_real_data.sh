@@ -41,7 +41,7 @@ done
   exit 2
 }
 
-CACHE="${QCT_CACHE_ROOT:-data}/alpaca_${FEED}_${ADJ}_1min"
+CACHE="${QCT_CACHE_ROOT:-data}/alpaca_${MODE}_${FEED}_${ADJ}_1min"
 ARGS=(--mode "$MODE" --start "$START" --feed "$FEED" --adjustment "$ADJ" --cache-dir "$CACHE")
 
 if [[ "$DRY" == 1 ]]; then
