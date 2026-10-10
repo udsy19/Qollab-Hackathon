@@ -12,7 +12,7 @@ updated: 2026-10-10
 > [!note] Signpost only.
 > Every line is the note's own first sentence, unedited. Nothing here is a new claim; if a line reads oddly, the note says it oddly.
 
-Measured 2026-10-10: **22 notes** carrying an answer.
+Measured 2026-10-10: **23 notes** carrying an answer.
 
 ## Promoted lessons — from the lanes
 
@@ -35,11 +35,12 @@ Decisions are law until superseded. Everything else describes; these DECIDE.
 |---|---|---|---|---|
 | [[SESSION-REGISTRY]] | Session registry — one writer per branch | current | 2026-10-09 | 1. A session opening work on a branch **reads this file first**. 2. It then **writes its own declaration** below — sessi |
 
-## Design — how it should work  (3)
+## Design — how it should work  (4)
 
 | note | title | status | date | gist |
 |---|---|---|---|---|
 | [[design-doc]] | <title> | proposed | {{date}} |  |
+| [[impact-qc-trade-spec]] | Impact track — the owner's QC-TRADE spec (verbatim) | current | 2026-10-10 | Given by the owner on 2026-10-10 16:44 ET as the product vision for Track 1, Quantum Impact. It is reproduced as given;  |
 | [[lanes-and-supervisors]] | How the work is organised: supervised lanes | current | 2026-10-09 | Each **lane** has a **supervisor** (Claude claude-opus-5-5, read-only tools, high effort). The supervisor plans, briefs, |
 | [[gate-independence-cases]] | Gate independence — the worked cases | current | 2026-10-09 | The seventeen laws of `.claude/rules/gate-independence.md`, each with the failure that produced it and the falsification |
 

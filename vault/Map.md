@@ -17,7 +17,7 @@ bytes of each note, and fails if it stops being true.
 > next reader can find it. Delete it and nothing but navigation is lost; regenerate it
 > with `node scripts/vault-hubs.mjs`.
 
-Measured 2026-10-10: **36 notes** over 10 folders.
+Measured 2026-10-10: **37 notes** over 10 folders.
 
 
 ## Start here — the vault root
@@ -59,6 +59,7 @@ Folder README: [[Design/README]]
 
 - [[Design/README|Design/]]
 - [[Design/gate-independence-cases|Gate independence — the worked cases]]
+- [[Design/impact-qc-trade-spec|Impact track — the owner's QC-TRADE spec (verbatim)]]
 - [[Design/lanes-and-supervisors|How the work is organised: supervised lanes]]
 
 ## `Missions/`

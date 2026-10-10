@@ -19,7 +19,7 @@ One project per track. Each is judged on its own, with its track declared at sub
 
 | track | the hackathon's definition | project |
 |---|---|---|
-| **Quantum Impact** | solving real-world problems with quantum + classical computing | **QC-TRADE** (owner, 2026-10-10: "track 1"): intraday US stocks/ETFs portfolio selection as a QUBO, solved by QAOA and benchmarked against classical solvers, net of costs, out of sample. Source in `impact/`; fit to Qollab in [[Research/impact-qc-trade-fit]] |
+| **Quantum Impact** | solving real-world problems with quantum + classical computing | **QC-TRADE** (owner, 2026-10-10: "track 1"): intraday US stocks/ETFs portfolio selection as a QUBO, solved by QAOA and benchmarked against classical solvers, net of costs, out of sample. Source in `impact/`. The owner's full spec, verbatim: [[Design/impact-qc-trade-spec]]. Fit to Qollab: [[Research/impact-qc-trade-fit]] |
 | **Quantum Playground** | using quantum to build something playful, artistic, or unexpected | *to come* |
 | **Quantum Unlocked** | make the hardest ideas in quantum computing click | *to come* |
 
