@@ -10,7 +10,8 @@ Checks, each against a value computed HERE, independently of the code under test
      exactly ONE run() call, for (n,k) in a small grid, and the call carries 2 circuits.
   4. The reported optimum equals a brute force over all 2^n bitstrings with sum = k (written here, not imported),
      every reported QUBO energy equals x'Qx of its reported selection, and the XY mixer's samples are all feasible.
-  5. The console names the data as SYNTHETIC.
+  5. The console warns that the numbers are SYNTHETIC.
+  6. At least one checked gap is non-zero, so check 4 is not vacuous.
 Exit 0 pass, 1 fail, 2 missing input (qiskit/scipy absent, project folder absent): never a skip.
 CEILING: this runs CPython locally on Qiskit's BasicSimulator. It does not prove the project runs in Pyodide on
 Qollab, nor on IonQ's simulator; those need a real run on Qollab.
@@ -103,13 +104,15 @@ def brute_force_opt(Q, k):
     return best, best_e
 
 
-for n, k in [(6, 2), (6, 3), (5, 2), (8, 4)]:
+nonzero_gaps = 0
+# (8, 4, 16): so few shots that a QAOA row misses the optimum, so the gap check is tested on a NON-zero gap
+for n, k, shots in [(6, 2, 512), (6, 3, 512), (5, 2, 512), (8, 4, 512), (8, 4, 16)]:
     be = OneJobBackend()
     project.backend = be
     out = io.StringIO()
     try:
         with contextlib.redirect_stdout(out):
-            summary = project.main(n_assets=n, k=k, reps=2, shots=512, seed=3, risk_aversion=6.0)
+            summary = project.main(n_assets=n, k=k, reps=2, shots=shots, seed=3, risk_aversion=6.0)
     except Exception as err:  # a second job, or anything else, is a failure
         check(f"n={n} k={k}: main() completes", False, f"{type(err).__name__}: {err}")
         continue
@@ -129,9 +132,12 @@ for n, k in [(6, 2), (6, 3), (5, 2), (8, 4)]:
     check(f"n={n} k={k}: every reported energy = x'Qx of its selection", not wrong_e, f"{wrong_e}")
     wrong_gap = [s for s, r in rows.items() if r.get("gap") is not None and abs(r["gap"] - (r["energy"] - opt_e)) > 1e-12]
     check(f"n={n} k={k}: every reported gap = E - E(brute force)", not wrong_gap, f"{wrong_gap}")
+    nonzero_gaps += sum(1 for r in rows.values() if r.get("gap") is not None and r["energy"] - opt_e > 1e-9)
     check(f"n={n} k={k}: XY-mixer samples all feasible", rows["QAOA XY mixer"]["feasible_frac"] == 1.0,
           f"{rows['QAOA XY mixer']['feasible_frac']}")
-    check(f"n={n} k={k}: console labels the data SYNTHETIC", "SYNTHETIC" in text)
+    check(f"n={n} k={k}: console warns the numbers are SYNTHETIC", "These numbers are SYNTHETIC" in text)
+
+check("at least one NON-zero gap was checked (else the gap check is vacuous)", nonzero_gaps > 0, "every row hit the optimum")
 
 print("IMPACT-QOLLAB-RUN " + (f"FAIL ({len(fails)})" if fails else "PASS"))
 sys.exit(1 if fails else 0)
