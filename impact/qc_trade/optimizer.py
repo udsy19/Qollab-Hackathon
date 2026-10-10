@@ -1,16 +1,31 @@
-"""Quadratic binary selection + bounded continuous portfolio refinement.
+"""Two-stage hybrid: (A) k-hot asset selection as a QUBO, (B) bounded continuous refinement.
 
-QAOA here is an IDEAL NUMPY STATEVECTOR simulator, not IBM hardware.
-All methods must use the SAME objective and input for a fair benchmark.
+Stage A solvers all minimise the SAME energy x'Qx (``qubo_matrix``) over the
+SAME feasible set {x binary, sum x = k}:
+
+* exact_qubo   exhaustive enumeration (certified optimum, small C(n,k) only)
+* milp_qubo    HiGHS MILP, McCormick + RLT linearisation (certified when gap 0)
+* greedy       best-improvement swap local search (k-hot throughout)
+* anneal       simulated annealing over k-hot swaps (k-hot throughout)
+* random_khot  uniform random k-subsets, best of `qaoa_shots` (the QAOA control)
+* qaoa         X-mixer QAOA on x'Qx + P(sum x - k)^2; P provably keeps the
+               penalised optimum k-hot and equal to the constrained optimum;
+               infeasible samples discarded at decoding (formulation differs:
+               penalty, not hard constraint - see qaoa.cardinality_penalty)
+* qaoa_xy      XY-mixer QAOA, Dicke start, never leaves the k-hot subspace
+
+QAOA here is an IDEAL statevector simulation (Qiskit circuits, qiskit-aer on
+the CPU). It is not quantum hardware and its runtime is not a quantum runtime.
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from itertools import combinations
+from itertools import combinations, islice
 from math import comb
 from time import perf_counter
 import numpy as np
 from scipy.optimize import minimize, milp, Bounds, LinearConstraint
 from scipy.sparse import lil_matrix
+from .qaoa import run_qaoa
 
 
 @dataclass(frozen=True)
@@ -25,6 +40,7 @@ class OptConfig:
     qaoa_reps: int = 2
     qaoa_maxiter: int = 80
     qaoa_shots: int = 1024
+    milp_time_limit: float = 30.0
     seed: int = 37
 
 
@@ -60,203 +76,156 @@ def qubo_energy(Q: np.ndarray, indices: np.ndarray) -> float:
     return float(x @ Q @ x)
 
 
-def exact_qubo(Q: np.ndarray, k: int, max_cases: int = 200_000) -> np.ndarray:
-    if comb(len(Q), k) > max_cases:
-        raise ValueError('Combinatorial search too large for exact QUBO solver')
-    best = min(combinations(range(len(Q)), k), key=lambda ij: Q[np.ix_(ij, ij)].sum())
+def exact_qubo(Q: np.ndarray, k: int, max_cases: int = 1_000_000, chunk: int = 50_000) -> np.ndarray:
+    """Exhaustive search over all C(n,k) supports, vectorised in chunks. Ties: lowest lexicographic."""
+    n = len(Q)
+    if comb(n, k) > max_cases:
+        raise ValueError(f'Combinatorial search too large for exact QUBO solver: C({n},{k})={comb(n, k)}')
+    Q = np.asarray(Q, float)
+    supports = combinations(range(n), k)
+    best, best_value = None, np.inf
+    while True:
+        block = np.array(list(islice(supports, chunk)), dtype=np.int64)
+        if not len(block):
+            break
+        values = Q[block[:, :, None], block[:, None, :]].sum(axis=(1, 2))
+        i = int(np.argmin(values))
+        if values[i] < best_value - 1e-15:
+            best, best_value = block[i], float(values[i])
     return np.asarray(best, int)
 
 
-def milp_qubo(Q: np.ndarray, k: int, time_limit: float=30.0) -> tuple[np.ndarray, dict]:
-    """STRONG classical HiGHS MILP reference for same k-hot QUBO.
+def milp_qubo(Q: np.ndarray, k: int, time_limit: float = 30.0, rlt: bool = True) -> tuple[np.ndarray, dict]:
+    """STRONG classical HiGHS MILP for the same k-hot QUBO (scipy.optimize.milp).
 
-    McCormick linearization of z_ij=y_i*y_j with binary y and continuous z;
-    globally optimal if HiGHS terminates with certified zero MIP gap.
+    McCormick linearisation z_ij = y_i y_j (z <= y_i, z <= y_j, z >= y_i + y_j - 1)
+    with binary y. ``rlt=True`` adds the reformulation-linearisation cuts
+    sum_{j != i} z_ij = (k-1) y_i, valid because sum_j y_j = k; they tighten the
+    LP relaxation without changing the integer feasible set. Globally optimal
+    if HiGHS terminates with a certified zero MIP gap ('milp_certified').
     """
-    n=len(Q)
-    pairs=list(combinations(range(n),2))
-    m=len(pairs)
-    c=np.r_[Q.diagonal(), np.array([2*Q[i,j] for i,j in pairs])]
-    a=lil_matrix((1+3*m,n+m),dtype=float)
-    a[0,:n]=1
-    lo=np.full(1+3*m,-np.inf)
-    hi=np.full(1+3*m,np.inf)
-    lo[0]=hi[0]=k
-    for idx,(i,j) in enumerate(pairs):
-        z=n+idx
-        a[1+idx,i]=-1; a[1+idx,z]=1; hi[1+idx]=0
-        a[1+m+idx,j]=-1; a[1+m+idx,z]=1; hi[1+m+idx]=0
-        a[1+2*m+idx,i]=1; a[1+2*m+idx,j]=1; a[1+2*m+idx,z]=-1
-        hi[1+2*m+idx]=1
-    integrality=np.r_[np.ones(n,dtype=int),np.zeros(m,dtype=int)]
-    fit=milp(c, integrality=integrality, bounds=Bounds(np.zeros(n+m),np.ones(n+m)),
-             constraints=LinearConstraint(a.tocsr(),lo,hi),
-             options={'time_limit':time_limit,'mip_rel_gap':1e-9})
+    n = len(Q)
+    pairs = list(combinations(range(n), 2))
+    m = len(pairs)
+    c = np.r_[Q.diagonal(), np.array([2 * Q[i, j] for i, j in pairs])]
+    rows = 1 + 3 * m + (n if rlt else 0)
+    a = lil_matrix((rows, n + m), dtype=float)
+    a[0, :n] = 1
+    lo = np.full(rows, -np.inf)
+    hi = np.full(rows, np.inf)
+    lo[0] = hi[0] = k
+    for idx, (i, j) in enumerate(pairs):
+        z = n + idx
+        a[1 + idx, i] = -1; a[1 + idx, z] = 1; hi[1 + idx] = 0
+        a[1 + m + idx, j] = -1; a[1 + m + idx, z] = 1; hi[1 + m + idx] = 0
+        a[1 + 2 * m + idx, i] = 1; a[1 + 2 * m + idx, j] = 1; a[1 + 2 * m + idx, z] = -1
+        hi[1 + 2 * m + idx] = 1
+        if rlt:
+            for v in (i, j):
+                a[1 + 3 * m + v, z] = 1
+    if rlt:
+        for v in range(n):
+            a[1 + 3 * m + v, v] = -(k - 1)
+            lo[1 + 3 * m + v] = hi[1 + 3 * m + v] = 0
+    integrality = np.r_[np.ones(n, dtype=int), np.zeros(m, dtype=int)]
+    fit = milp(c, integrality=integrality, bounds=Bounds(np.zeros(n + m), np.ones(n + m)),
+               constraints=LinearConstraint(a.tocsr(), lo, hi),
+               options={'time_limit': time_limit, 'mip_rel_gap': 1e-9})
     if fit.x is None:
-        raise RuntimeError('HiGHS MILP found no feasible portfolio: '+str(fit.message))
-    selected=np.flatnonzero(fit.x[:n] > .5)
-    if len(selected)!=k:
+        raise RuntimeError('HiGHS MILP found no feasible portfolio: ' + str(fit.message))
+    selected = np.flatnonzero(fit.x[:n] > .5)
+    if len(selected) != k:
         raise RuntimeError('HiGHS MILP returned invalid cardinality')
-    return selected,{'milp_gap':float(fit.mip_gap) if fit.mip_gap is not None else np.nan,
-                     'milp_nodes':int(fit.mip_node_count) if fit.mip_node_count is not None else -1,
-                     'milp_certified':bool(fit.success and fit.mip_gap <= 1e-8)}
+    gap = float(fit.mip_gap) if fit.mip_gap is not None else np.nan
+    return selected, {'milp_gap': gap,
+                      'milp_nodes': int(fit.mip_node_count) if fit.mip_node_count is not None else -1,
+                      'milp_certified': bool(fit.success and gap <= 1e-8),
+                      'milp_status': str(fit.message)[:80]}
+
+
+def _swap_deltas(Q: np.ndarray, Qx: np.ndarray, ones: np.ndarray, zeros: np.ndarray) -> np.ndarray:
+    """Energy change of every swap (i in ones -> out, j in zeros -> in): rows i, columns j."""
+    d = Q.diagonal()
+    return (2 * (Qx[zeros][None, :] - Qx[ones][:, None]) + d[ones][:, None] + d[zeros][None, :]
+            - 2 * Q[np.ix_(ones, zeros)])
 
 
 def greedy_swap(Q: np.ndarray, k: int) -> np.ndarray:
-    """Classical local-search baseline; swap to best improving neighbor."""
+    """Classical local search: start from the k best diagonal terms, take the best improving swap until none."""
     n = len(Q)
-    indices = np.argsort(Q.diagonal())[:k]
-    best_value = qubo_energy(Q, indices)
-    for _ in range(100):
-        changed = False
-        for i in indices:
-            for j in range(n):
-                if j in indices:
-                    continue
-                new_idx = np.array(sorted((set(indices) - {int(i)}) | {j}), dtype=int)
-                val = qubo_energy(Q, new_idx)
-                if val < best_value - 1e-12:
-                    best_value = val
-                    best_next = new_idx
-                    changed = True
-        if not changed:
+    x = np.zeros(n, bool)
+    x[np.argsort(Q.diagonal(), kind='stable')[:k]] = True
+    Qx = Q[:, x].sum(axis=1)
+    for _ in range(10 * n):
+        ones, zeros = np.flatnonzero(x), np.flatnonzero(~x)
+        deltas = _swap_deltas(Q, Qx, ones, zeros)
+        r, c = np.unravel_index(int(np.argmin(deltas)), deltas.shape)
+        if deltas[r, c] >= -1e-15:
             break
-        indices = best_next
-    return np.asarray(indices, int)
+        i, j = ones[r], zeros[c]
+        x[i], x[j] = False, True
+        Qx += Q[:, j] - Q[:, i]
+    return np.flatnonzero(x)
 
 
 def anneal_qubo(Q: np.ndarray, k: int, steps: int, restarts: int, seed: int) -> np.ndarray:
+    """Simulated annealing over k-hot swaps (cardinality is never violated), O(n) per accepted move.
+
+    Restart 0 starts from the greedy solution, later restarts from random supports.
+    Geometric cooling from temp0 = k std(Q) to 1e-3 temp0.
+    """
     rng = np.random.default_rng(seed)
     n = len(Q)
     if not 0 < k < n:
         raise ValueError('k must be within asset universe')
-    temp0 = max(float(np.std(Q)) * k, 1e-7)
+    d = Q.diagonal()
+    temp0 = max(float(np.std(Q)) * k, 1e-12)
     best, best_value = None, np.inf
     for restart in range(restarts):
-        indices = (greedy_swap(Q, k) if restart == 0 else rng.choice(n, size=k, replace=False))
-        x = np.zeros(n, float)
-        x[indices] = 1
-        val = qubo_energy(Q, indices)
-        if val < best_value:
-            best, best_value = indices.copy(), val
+        start = greedy_swap(Q, k) if restart == 0 else rng.choice(n, size=k, replace=False)
+        x = np.zeros(n, bool)
+        x[start] = True
+        Qx = Q[:, x].sum(axis=1)
+        val = float(Qx[x].sum())
+        if val < best_value - 1e-15:
+            best, best_value = np.flatnonzero(x), val
         for step in range(steps):
-            i = int(rng.choice(np.flatnonzero(x > .5)))
-            j = int(rng.choice(np.flatnonzero(x < .5)))
-            d = np.zeros(n)
-            d[i], d[j] = -1, 1
-            delta = float(2 * d @ Q @ x + d @ Q @ d)
-            temp = temp0 * (.001 ** (step / max(steps-1, 1)))
-            if delta <= 0 or rng.random() < np.exp(-min(700, max(0, delta)/temp)):
-                x[i], x[j] = 0, 1
+            i = int(rng.choice(np.flatnonzero(x)))
+            j = int(rng.choice(np.flatnonzero(~x)))
+            delta = float(2 * (Qx[j] - Qx[i]) + d[i] + d[j] - 2 * Q[i, j])
+            temp = temp0 * (.001 ** (step / max(steps - 1, 1)))
+            if delta <= 0 or rng.random() < np.exp(-min(700, delta / temp)):
+                x[i], x[j] = False, True
+                Qx += Q[:, j] - Q[:, i]
                 val += delta
-                if val < best_value - 1e-12:
-                    best_value, best = val, np.flatnonzero(x).copy()
+                if val < best_value - 1e-15:
+                    best, best_value = np.flatnonzero(x), val
     return np.sort(best)
 
 
-def qaoa_statevector(Q: np.ndarray, k: int, cfg: OptConfig, seed: int) -> tuple[np.ndarray, dict]:
-    """Noiseless X-mixer QAOA, shot sampling, all costs/evaluations observable.
+def random_khot(Q: np.ndarray, k: int, shots: int, seed: int) -> np.ndarray:
+    """CONTROL for QAOA: draw `shots` uniform random k-subsets and keep the lowest x'Qx.
 
-    No quantum hardware, no quantum runtime claim. The X mixer does not
-    preserve cardinality; penalties plus feasible-sample filtering used.
+    Same sample budget and same decoding rule as QAOA's final sampling step, so a
+    QAOA result that this does not beat shows no benefit from the circuit.
     """
-    n = len(Q)
-    if n > 9:
-        raise ValueError('Statevector QAOA demonstration is limited to <=9 binary variables')
     rng = np.random.default_rng(seed)
-    penalty = max(4 * float(np.abs(Q).sum()), 1e-4)
-    Qp = Q + penalty * np.ones_like(Q)
-    Qp[np.diag_indices(n)] -= 2 * k * penalty
-    states = np.arange(1 << n, dtype=np.int64)
-    binary = ((states[:, None] >> np.arange(n)) & 1).astype(float)
-    energies = np.einsum('si,ij,sj->s', binary, Qp, binary, optimize=True)
-    energies = (energies - energies.mean()) / max(energies.std(), 1e-12)
-    feasible = binary.sum(axis=1) == k
-    pairs = [(states[(states >> bit & 1) == 0], states[(states >> bit & 1) == 0] + (1 << bit))
-             for bit in range(n)]
-    evals = 0
+    n = len(Q)
+    block = np.argsort(rng.random((shots, n)), axis=1)[:, :k]
+    values = Q[block[:, :, None], block[:, None, :]].sum(axis=(1, 2))
+    return np.sort(block[int(np.argmin(values))])
 
-    def probs(params: np.ndarray) -> np.ndarray:
-        amplitudes = np.full(1 << n, (1 / (1 << n))**.5, complex)
-        for layer in range(cfg.qaoa_reps):
-            amplitudes *= np.exp(-1j * params[cfg.qaoa_reps+layer] * energies)
-            ca, sa = np.cos(params[layer]), np.sin(params[layer])
-            for a, b in pairs:
-                aa, bb = amplitudes[a].copy(), amplitudes[b].copy()
-                amplitudes[a] = ca*aa - 1j*sa*bb
-                amplitudes[b] = ca*bb - 1j*sa*aa
-        return np.abs(amplitudes)**2
 
-    def loss(params: np.ndarray) -> float:
-        nonlocal evals
-        evals += 1
-        return float(probs(params) @ energies)
-
-    fit = minimize(loss, rng.uniform(0, np.pi, 2*cfg.qaoa_reps), method='COBYLA',
-                   options={'maxiter': cfg.qaoa_maxiter, 'rhobeg': 0.8})
-    pp = probs(fit.x)
-    samples = rng.choice(len(states), size=cfg.qaoa_shots, p=pp/pp.sum())
-    valid = samples[feasible[samples]]
-    if len(valid) == 0:
-        raise RuntimeError('QAOA sampled no valid k-hot bitstrings')
-    chosen = binary[valid[np.argmin(energies[valid])]].astype(int)
-    return np.flatnonzero(chosen), {'qaoa_feasible_mass': float(pp[feasible].sum()),
-                                     'qaoa_feasible_shots': int(len(valid)),
-                                     'qaoa_evaluations': evals,
-                                     'qaoa_success': bool(fit.success)}
+def qaoa_statevector(Q: np.ndarray, k: int, cfg: OptConfig, seed: int) -> tuple[np.ndarray, dict]:
+    """Standard X-mixer QAOA with provable cardinality penalty, Qiskit circuit, ideal Aer simulation."""
+    return run_qaoa(Q, k, reps=cfg.qaoa_reps, maxiter=cfg.qaoa_maxiter, shots=cfg.qaoa_shots,
+                    seed=seed, mixer='x')
 
 
 def qaoa_xy_statevector(Q: np.ndarray, k: int, cfg: OptConfig, seed: int) -> tuple[np.ndarray, dict]:
-    """Ideal QAOA with cardinality-PRESERVING partial-XY ring mixer.
-
-    Initial |D(n,k)> = uniform computational basis superposition over k-hot
-    states; XY mixers swap adjacent 01 and 10 states and preserve Hamming weight.
-    The mixer acts as a sequential ring of 2-qubit gates (Trotterized). No
-    quantum hardware/noise/calibration/transpilation simulated.
-    """
-    n=len(Q)
-    if n>9:
-        raise ValueError('Statevector QAOA XY capped at <=9 assets')
-    rng=np.random.default_rng(seed)
-    states=np.arange(1<<n,dtype=np.int64)
-    binary=((states[:,None]>>np.arange(n)) & 1).astype(float)
-    feasible=binary.sum(axis=1)==k
-    energy=np.einsum('si,ij,sj->s',binary,Q,binary,optimize=True)
-    levels=(energy-energy[feasible].mean())/max(energy[feasible].std(),1e-12)
-    nstates=len(states)
-    edges=[(j,(j+1)%n) for j in range(n)]
-    pairs=[]
-    for i,j in edges:
-        lower=states[(((states>>i)&1)==0) & (((states>>j)&1)==1)]
-        upper=lower ^ (1<<i) ^ (1<<j)
-        pairs.append((lower,upper))
-    evals=0
-    def probs(params):
-        a=np.zeros(nstates,complex)
-        a[feasible]=1/np.sqrt(int(feasible.sum()))
-        for layer in range(cfg.qaoa_reps):
-            a *= np.exp(-1j*params[cfg.qaoa_reps+layer]*levels)
-            ca,sa=np.cos(params[layer]),np.sin(params[layer])
-            for left,right in pairs:
-                x,y=a[left].copy(),a[right].copy()
-                a[left]=ca*x-1j*sa*y
-                a[right]=ca*y-1j*sa*x
-        return np.abs(a)**2
-    def loss(params):
-        nonlocal evals
-        evals+=1
-        return float(probs(params)@levels)
-    fit=minimize(loss,rng.uniform(0,np.pi,2*cfg.qaoa_reps),method='COBYLA',
-                 options={'maxiter':cfg.qaoa_maxiter,'rhobeg':.8})
-    probabilities=probs(fit.x)
-    feasible_mass=float(probabilities[feasible].sum())
-    if not np.isclose(feasible_mass,1,atol=1e-7):
-        raise AssertionError('XY mixer unexpectedly violated cardinality')
-    shots=rng.choice(nstates,size=cfg.qaoa_shots,p=probabilities/probabilities.sum())
-    best=shots[np.argmin(energy[shots])]
-    return np.flatnonzero(binary[best]), {'qaoa_feasible_mass':feasible_mass,
-        'qaoa_feasible_shots':cfg.qaoa_shots,'qaoa_evaluations':evals,
-        'qaoa_success':bool(fit.success),'mixer':'cardinality_preserving_xy_ring'}
+    """Cardinality-preserving XY-ring QAOA from a Dicke state, Qiskit circuit, ideal Aer simulation."""
+    return run_qaoa(Q, k, reps=cfg.qaoa_reps, maxiter=cfg.qaoa_maxiter, shots=cfg.qaoa_shots,
+                    seed=seed, mixer='xy')
 
 
 def portfolio_objective(w: np.ndarray, mu: np.ndarray, cov: np.ndarray, prev: np.ndarray, cfg: OptConfig) -> float:
@@ -329,23 +298,32 @@ def choose(method: str, mu: np.ndarray, cov: np.ndarray, prev: np.ndarray,
     if method == 'full_exact':
         w = full_exact(mu, cov, prev, cfg)
         return w, {'runtime_seconds':perf_counter()-tick}
+    construct = perf_counter()
     Q = qubo_matrix(mu, cov, prev, cfg)
+    construct_seconds = perf_counter() - construct
+    solve = perf_counter()
     extras: dict = {}
     if method == 'exact_qubo':
         indices = exact_qubo(Q, cfg.k)
     elif method == 'milp_qubo':
-        indices,extras = milp_qubo(Q,cfg.k)
+        indices, extras = milp_qubo(Q, cfg.k, time_limit=cfg.milp_time_limit)
     elif method == 'greedy':
         indices = greedy_swap(Q, cfg.k)
     elif method == 'anneal':
         indices = anneal_qubo(Q, cfg.k, cfg.anneal_steps, cfg.anneal_restarts, seed)
+    elif method == 'random_khot':
+        indices = random_khot(Q, cfg.k, cfg.qaoa_shots, seed)
     elif method == 'qaoa':
         indices, extras = qaoa_statevector(Q, cfg.k, cfg, seed)
     elif method == 'qaoa_xy':
         indices, extras = qaoa_xy_statevector(Q, cfg.k, cfg, seed)
     else:
         raise ValueError('Unrecognized method: '+method)
+    solve_seconds = perf_counter() - solve
+    polish = perf_counter()
     w = refine(indices, mu, cov, prev, cfg)
-    return w, {**extras, 'qubo_energy':qubo_energy(Q, indices),
-               'runtime_seconds':perf_counter()-tick,
-               'support':';'.join(str(i) for i in indices)}
+    refine_seconds = perf_counter() - polish
+    return w, {**extras, 'qubo_energy': qubo_energy(Q, indices),
+               'construct_seconds': construct_seconds, 'solve_seconds': solve_seconds,
+               'refine_seconds': refine_seconds, 'runtime_seconds': perf_counter()-tick,
+               'support': ';'.join(str(i) for i in indices)}
