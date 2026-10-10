@@ -8,4 +8,5 @@ Reader: the owner and anyone reviewing `docs/impact/INTEGRATION_AUDIT.md`. Each 
 | `verify_qaoa_circuits.<sha>.txt` | `PYTHONPATH=. python ../evidence/integration/verify_qaoa_circuits.py` | in file |
 | `alpaca-check-2026-10-10.txt` | read-only Alpaca paper check, SIP and IEX (no secrets, no orders) | `python -m qc_trade.cli check-alpaca --feed sip\|iex` | 0 |
 | `alpaca-fetch-smoke-2026-10-10.txt` | first real download: 21 sessions, 6 ETFs, SIP, 0 orders | `bash scripts/fetch_real_data.sh smoke` | 0 |
+| `alpaca-fetch-full-2026-10-10.txt` | full real download 2024-01-01..2026-10-09: 696 sessions, 280 rejected (DIA 262), 0 orders | `bash scripts/fetch_real_data.sh full` | 0 |
 | `impact-qollab-run.<sha>.txt` | `python -c "from main import main; main()"` | in file |

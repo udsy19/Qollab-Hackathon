@@ -1,0 +1,11 @@
+# bash scripts/fetch_real_data.sh full  (impact/ on main 9ac6e44; paper keys sourced, never printed; data gitignored)
+Read-only download (full, feed=sip, adjustment=raw). No orders will be sent.
+[1/5] paper account authenticated: status=ACTIVE trading_blocked=False  orders submitted: 0
+[2/5] feed entitlement at 2026-10-09: sip=allowed iex=allowed; requested feed: sip
+[3/5] minute bars: 204 symbol-month partitions -> data/alpaca_full_sip_raw_1min
+      downloaded 204, reused 0 verified partition(s)
+[4/5] daily bars for volume cross-check: 4176 rows
+[5/5] validation: 696 sessions, 280 rejected (40.23%), 1 flag(s); 5-minute bars kept for 416 sessions
+      rejected per symbol: {'SPY': 0, 'QQQ': 0, 'IWM': 0, 'DIA': 262, 'TLT': 5, 'GLD': 32}; rejected sessions more volatile (p<0.05): ['TLT']
+use it: python -m qc_trade.cli backtest --data data/alpaca_full_sip_raw_1min ...   (no orders were submitted)
+SUMMARY: OK mode=full feed=sip adjustment=raw symbols=6 window=2024-01-01..2026-10-09 sessions=696 rejected=280 minute_rows=3010839 manifest=data/alpaca_full_sip_raw_1min/manifest.json sha256=c579b58d70a646aed7abdf37e4615b4772483e36c6e63b427dab04d3e856f892 orders=0
