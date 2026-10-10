@@ -292,7 +292,7 @@ def plot(out: Path, summary, not_run) -> list[Path]:
     paths = []
     panels = [('median_runtime_s', 'median end-to-end runtime (s, log)', True),
               ('ttt99_s', 'time-to-target, 99% (s, log; missing = never hit)', True),
-              ('max_peak_rss_mb', 'peak process RSS (MB, log)', True),
+              ('max_peak_rss_mb', 'peak process RSS, MB (incl. ~115 MB import baseline)', True),
               ('median_qubo_gap_rel', 'median relative QUBO gap to reference', False)]
     for regime in REGIMES:
         s = summary[(summary.regime == regime) & (summary.method != 'full_exact')]
@@ -318,8 +318,8 @@ def plot(out: Path, summary, not_run) -> list[Path]:
         nr = not_run[(not_run.regime == regime) & not_run.method.isin(['qaoa', 'qaoa_xy'])]
         cut = f"QAOA not run for N in {sorted(set(nr.n))} (see not_run.csv)" if len(nr) else ''
         fig.suptitle(f'QUBO solver scaling - SYNTHETIC instances, regime "{regime}" '
-                     f'(k = {"3" if regime == "trading" else "max(2, N//5)"}). '
-                     f'QAOA = ideal CPU statevector simulation, not hardware. {cut}', fontsize=9)
+                     f'(k = {"3" if regime == "trading" else "max(2, N//5)"}), 3 instances x 3 seeds\n'
+                     f'QAOA = ideal CPU statevector simulation (qiskit-aer), not hardware. {cut}', fontsize=9)
         p = out / f'scaling_{regime}.png'
         fig.savefig(p, dpi=130)
         plt.close(fig)
@@ -329,13 +329,17 @@ def plot(out: Path, summary, not_run) -> list[Path]:
         fig, ax = plt.subplots(figsize=(7, 4.5), constrained_layout=True)
         for (regime, method), g in q.groupby(['regime', 'method']):
             g = g.sort_values('n')
-            ax.plot(g.n, g.qaoa_optimal_mass / g.uniform_optimal_mass, color=COLORS[method], marker=MARKERS[method],
+            space = np.array([2.0 ** n if method == 'qaoa' else comb(n, k) for n, k in zip(g.n, g.k)])
+            khot = g.uniform_optimal_mass * space / np.array([comb(n, k) for n, k in zip(g.n, g.k)])
+            ax.plot(g.n, g.qaoa_optimal_mass / khot, color=COLORS[method], marker=MARKERS[method],
                     ls='-' if regime == 'hard' else '--', lw=2, ms=7, label=f'{method}, {regime}')
         ax.axhline(1, color='#52514e', lw=1, ls=':')
         ax.set_yscale('log')
         ax.set_xlabel('assets N')
-        ax.set_ylabel('P(optimal) after QAOA / P(optimal) uniform start')
-        ax.set_title('QAOA amplification of the optimal portfolio over its own start state (p = 2, ideal)', fontsize=9)
+        ax.set_ylabel('P(optimal), QAOA / uniform k-hot sampler')
+        ax.set_title('Per-shot probability of the optimal portfolio, relative to the classical control\n'
+                     '(uniform random k-hot sample; < 1 = worse than random guessing). p = 2, ideal, median of 9 runs',
+                     fontsize=9)
         ax.legend(frameon=False, fontsize=8)
         ax.grid(alpha=.25, lw=.6)
         p = out / 'qaoa_amplification.png'
