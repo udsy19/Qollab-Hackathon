@@ -1,1 +1,12 @@
 2026-10-10 00:49 === CONSULT 1: supervisor planning (0 reports, 0 images, 18799 chars)
+2026-10-10 00:50 LEARN: Consult 1 (2026-10-10 00:49 UTC): the lane started with no prior work. The supervisor chose to research before pitching. Qollab's runtime format and IonQ simula
+2026-10-10 00:50 agent qollab-recon (opus) start on lane/unlocked/integration
+2026-10-10 00:50 agent ionq-sim-spike (opus) start on lane/unlocked/integration
+2026-10-10 00:55 agent ionq-sim-spike finished rc=0 report=present
+2026-10-10 00:55 === CONSULT 2: supervisor planning (1 reports, 5 images, 27414 chars)
+2026-10-10 00:55 LEARN: 2026-10-10 consult 2: On Qollab, the IonQ simulators (Aria 1/2, Forte 1/Forte Enterprise 1) are "Remotely Run Simulators" with "Credits apply". They need sign-i
+2026-10-10 00:55 LEARN: 2026-10-10 consult 2: The winning Qollab shape is "JS + Qiskit". It has a Project Card (What it shows / How it works / Make it yours), and Run renders an intera
+2026-10-10 00:55 LEARN: 2026-10-10 consult 2: Novelty constraint: the distance-3 repetition-code QEC game (click to flip, syndrome, storm-mode threshold plot) is Qollab's own official 
+2026-10-10 00:55 ASK_OWNER: **IonQ simulators on Qollab show "Credits apply". How should we satisfy "runs on IonQ's simulator" under your "Free simulators only" rule?**  Evidence: [Select-QPU dialog](renders/qollab-recon/02-sele
+2026-10-10 00:55 hubs regenerated after MERGE lane/unlocked/ionq-sim-spike into lane/unlocked/integration (consult 2)
+2026-10-10 00:55 MERGE lane/unlocked/ionq-sim-spike ok

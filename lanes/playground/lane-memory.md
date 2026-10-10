@@ -1,0 +1,2 @@
+
+- 2026-10-10 consult 1: Consult 1 (2026-10-10 00:49 UTC): the pitch to the owner waits on two things. The first is platform research (how Qollab runs code and how the IonQ simulator is reached). The second is idea spikes, each with a real artifact. A pitch built on guesses about the runtime risks the owner picking an idea that cannot run when a judge presses Run on Qollab. Platform facts live in `vault/Research/qollab-platform.md`, shared with the unlocked lane: whoever writes it first owns it, and the other lane extends it.

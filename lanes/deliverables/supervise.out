@@ -1,1 +1,12 @@
 2026-10-10 00:49 === CONSULT 1: supervisor planning (0 reports, 0 images, 18759 chars)
+2026-10-10 00:50 LEARN: At consult 1 (2026-10-10 00:49 UTC) the ideas are unpicked and the Qollab page and runtime format are unknown. The deliverables lane's first useful moves are th
+2026-10-10 00:50 agent qollab-page-research (opus) start on lane/deliverables/integration
+2026-10-10 00:57 agent docs-kit (opus) start on lane/deliverables/integration
+2026-10-10 00:57 agent qollab-page-research finished rc=0 report=present
+2026-10-10 00:57 === CONSULT 2: supervisor planning (1 reports, 10 images, 28612 chars)
+2026-10-10 00:58 LEARN: 2026-10-10 consult 2: I merged qollab-page-research and landed it on main (evidence: `vault/Research/qollab-platform-and-submission.md` and `renders/qollab-page
+2026-10-10 00:58 LEARN: 2026-10-10 consult 2: The model write-up is Quantum Hackathon Soundtrack: hook → what it shows → numbered how-to-use → how it works → files → make it yours → cr
+2026-10-10 00:58 ASK_OWNER: Two signed-in checks, about 2 minutes each. Only you can do them, because they need your Qollab account. We have not signed in or submitted anything.  **Q1. The submission form.** Open `https://qollab
+2026-10-10 00:58 hubs regenerated after MERGE lane/deliverables/qollab-page-research into lane/deliverables/integration (consult 2)
+2026-10-10 00:58 MERGE lane/deliverables/qollab-page-research ok
+2026-10-10 00:58 LAND lane/deliverables/integration ok (50229a6)

@@ -20,7 +20,9 @@ while true; do
     elif [ "$a" -gt 0 ] && [ "$b" -gt 0 ]; then echo "$(date -u +%F' '%H:%M) DIVERGED $MAIN +$a/-$b vs origin: not touched" >> $L; fi
   else echo "$(date -u +%F' '%H:%M) fetch failed" >> $L; fi
   refs=(); for g in $GLOBS; do refs+=("refs/heads/$g:refs/heads/$g"); done
-  git push -q origin "${refs[@]}" >/dev/null 2>>$L.err || echo "$(date -u +%F' '%H:%M) some branch pushes refused (see git-sync.log.err)" >> $L
+  if [ ${#refs[@]} -gt 0 ]; then   # no globs = lane branches stay local
+    git push -q origin "${refs[@]}" >/dev/null 2>>$L.err || echo "$(date -u +%F' '%H:%M) some branch pushes refused (see git-sync.log.err)" >> $L
+  fi
   [ -n "$U" ] && chown -R "$U:$U" "$R/.git" 2>/dev/null
   sleep "$INT"
 done

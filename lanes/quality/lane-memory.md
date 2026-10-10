@@ -1,0 +1,2 @@
+
+- 2026-10-10 consult 1: Consult 1 (2026-10-10 00:49 UTC): the lane started from zero. There is no project code and the Qollab runtime is unknown. The first two moves are research into Qollab execution and a host toolchain matrix with a clean-env runner. Project-specific runs wait until the playground/unlocked lanes have code. Expected blocker: the qiskit-ionq `ionq_simulator` may need an IonQ API key that only the owner can create. Do not ask the owner until the research confirms whether Qollab provides a key-free IonQ path.
