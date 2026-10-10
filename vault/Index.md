@@ -12,7 +12,7 @@ updated: 2026-10-10
 > [!note] Signpost only.
 > Every line is the note's own first sentence, unedited. Nothing here is a new claim; if a line reads oddly, the note says it oddly.
 
-Measured 2026-10-10: **24 notes** carrying an answer.
+Measured 2026-10-10: **25 notes** carrying an answer.
 
 ## Promoted lessons — from the lanes
 
@@ -29,10 +29,11 @@ Decisions are law until superseded. Everything else describes; these DECIDE.
 | [[0001-vault-is-mission-control]] | D-0001 — The vault lives in the repo and is mission control | current |  |
 | [[decision]] | D-XXXX — <title> | proposed |  |
 
-## Reports — what was measured  (2)
+## Reports — what was measured  (3)
 
 | note | title | status | date | gist |
 |---|---|---|---|---|
+| [[impact-research-audit]] | Impact — QC-TRADE audit and backtest correctness fixes (Pl | current | 2026-10-10 | 1. **Share/cash ledger** replaces weight-drift NAV. Fills happen at the bar open, sells before buys, and buys are capped |
 | [[impact-qollab-qaoa]] | Impact track: the Qollab project `impact-qollab/` (QAOA in | current | 2026-10-10 | `impact-qollab/` is a Qollab Python project that builds a k-of-n portfolio-selection QUBO on six SYNTHETIC ETFs, tunes t |
 | [[SESSION-REGISTRY]] | Session registry — one writer per branch | current | 2026-10-09 | 1. A session opening work on a branch **reads this file first**. 2. It then **writes its own declaration** below — sessi |
 

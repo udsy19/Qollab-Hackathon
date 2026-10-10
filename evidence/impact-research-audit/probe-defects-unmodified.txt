@@ -1,0 +1,5 @@
+DEFECT 1: panel with a missing mid-session 5m bar accepted silently
+DEFECT 2: base fees 1574.00 vs "+0 bps stress" fees 830.45
+DEFECT 3: synthetic_panel(8 symbols) -> ValueError operands could not be broadcast together with shapes (6,) (8,) 
+DEFECT 4: default starting_capital=100000
+DEFECT 5: no fills/holdings ledger

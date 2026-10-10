@@ -1,0 +1,47 @@
+
+SYNTHETIC TEST ONLY — NO MARKET-RETURN EVIDENCE
+            oos_sessions  oos_total_return  oos_sharpe_rf0  oos_max_drawdown  oos_trades  oos_fees_usd
+anneal           10.0000           -0.0250         -3.8027           -0.0413    110.0000      520.6753
+milp_qubo        10.0000           -0.0250         -3.8027           -0.0413    110.0000      520.6753
+exact_qubo       10.0000           -0.0250         -3.8027           -0.0413    110.0000      520.6753
+greedy           10.0000           -0.0250         -3.8027           -0.0413    110.0000      520.6753
+topk             10.0000           -0.0493         -8.7245           -0.0493    120.0000      917.8573
+minvar           10.0000            0.0007          0.2730           -0.0144     80.0000      132.2790
+spy              10.0000           -0.0136         -1.9555           -0.0389     20.0000      139.1937
+equal            10.0000           -0.0026         -0.4857           -0.0219     54.0000      122.2025
+cash             10.0000            0.0000             NaN            0.0000      0.0000        0.0000
+
+COMPUTATIONAL SAME-INSTANCE BENCHMARK (QAOA = ideal statevector simulation)
+ n     method  trials  median_seconds  median_qubo_gap  median_refined_gap
+ 4     anneal       8       0.0017055                0                   0
+ 4 exact_qubo       8    0.0002107085                0                   0
+ 4 full_exact       4     0.001097521                0                   0
+ 4     greedy       8    0.0002423335                0                   0
+ 4  milp_qubo       8     0.004659646                0                   0
+ 4       qaoa       8      0.01087021                0                   0
+ 4    qaoa_xy       8      0.01084994                0                   0
+ 4       topk       4     0.000210979                0                   0
+ 6     anneal       8     0.001698562                0                   0
+ 6 exact_qubo       8    0.0002324375                0                   0
+ 6 full_exact       4     0.002786937                0                   0
+ 6     greedy       8     0.000260125                0                   0
+ 6  milp_qubo       8     0.004689729                0                   0
+ 6       qaoa       8      0.01137167                0                   0
+ 6    qaoa_xy       8      0.01099702                0                   0
+ 6       topk       4    0.0002374585     0.0001792873        0.0001587496
+Saved: /Users/udsy/PycharmProjects/Qollab-Hackathon/.claude/worktrees/agent-a555f850f32975121/impact/outputs/demo
+{
+  "oos_sessions": 10,
+  "synthetic_data": true,
+  "all_gates_passed": false,
+  "evidence_gates": {
+    "genuine_historical_input": false,
+    "at_least_60_oos_sessions": false,
+    "positive_oos_net_return": false,
+    "higher_net_return_than_intraday_spy_baseline": false,
+    "paired_bootstrap_95pct_lower_above_zero_bps_per_day": false,
+    "positive_return_with_5bps_extra_slippage_per_side": false,
+    "positive_oos_net_return_conservative_costs": false
+  },
+  "report": "outputs/demo/RESEARCH_AUDIT.md"
+}

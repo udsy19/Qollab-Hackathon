@@ -1,0 +1,9 @@
+/private/tmp/qct-venv/lib/python3.13/site-packages/scipy/_external/pyprima/common/preproc.py:68: UserWarning: COBYLA: Invalid MAXFUN; it should be at least num_vars + 2; it is set to 6
+  warn(f'{solver}: Invalid MAXFUN; it should be at least {min_maxfun_str}; it is set to {maxfun}')
+== 1. runtime, 6 symbols, methods milp_qubo,exact_qubo,greedy,topk,minvar,spy,equal,cash
+sessions=22 bars=1716 seconds=1.8 sec_per_session=0.084
+sessions=64 bars=4992 seconds=5.6 sec_per_session=0.088
+== 2. QAOA vs sampling, n=6 k=2 (15 feasible states), shots as in the demo benchmark (256)
+trials=20 optimum_found: qaoa_xy=1.00 qaoa_xy_no_param_search=0.95 qaoa_x=1.00 uniform_random_256_samples=1.00
+P(uniform 256 draws over 15 states miss the optimum) = 2.14e-08
+mean X-mixer feasible mass=0.545
