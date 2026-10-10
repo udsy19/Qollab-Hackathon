@@ -50,3 +50,4 @@ Read [[Vision]], [[Plan]], `vault/Research/qollab-platform-and-submission.md`; n
 - Baseline: original `impact/` tests 28 passed on `main`.
 - qollab-qaoa merged as `d385242` after independent checks (Dicke state, `_ccry`, cost layer, XY cardinality, end-to-end run with 1 job): [[Reports/impact-qollab-qaoa]], `docs/impact/INTEGRATION_AUDIT.md`. Plan row 3 done. Only red board row: the missing YouTube link (owner action).
 - Still running: research-audit, research-solvers, research-data.
+- research-audit merged as `464a8dd` (43 tests pass on the merged tree, overseer's own run); [[Reports/impact-research-audit]], `impact/AUDIT.md`. Plan row 4 done. Relayed O1–O4 to research-solvers (QAOA "gap 0" at n=6, k=2 is matched by random sampling) and O5–O7 to research-data.
