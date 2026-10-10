@@ -199,6 +199,8 @@ def main(n_assets: int = 6, k: int = 2, reps: int = 2, shots: int = 1024, seed: 
     try:
         from js import sendFile  # Qollab only: offers the JSON in the console
         sendFile("qaoa_benchmark.json", "application/json", json.dumps(summary, default=str))
-    except ImportError:
+    except ImportError:  # not on Qollab
         pass
+    except Exception as err:  # the JSON copy is optional; never fail a finished run over it
+        print(f"(JSON copy not offered: {type(err).__name__}: {err})")
     return summary
