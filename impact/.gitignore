@@ -10,3 +10,7 @@
 **/.pytest_cache/
 *.egg-info/
 .venv/
+# Licensed market data must never be committed: the Alpaca cache lives in data/, and any
+# stray Parquet or interrupted-download file anywhere in impact/ is ignored too.
+*.parquet
+*.partial

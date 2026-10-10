@@ -27,7 +27,6 @@ fi
 export APCA_API_KEY_ID APCA_API_SECRET_KEY
 trap 'unset APCA_API_KEY_ID APCA_API_SECRET_KEY' EXIT
 
-"$PYTHON_CMD" -m qc_trade.cli check-alpaca --feed sip
 TODAY_UTC="$(date -u +%Y-%m-%d)"
 SYMBOLS='SPY,QQQ,IWM,DIA,TLT,GLD'
 if [[ "$MODE" == "pilot" ]]; then
@@ -47,17 +46,10 @@ else
   OUTPUT="outputs/real_full_${TODAY_UTC}"
 fi
 
-mkdir -p data "$OUTPUT"
-DATA="data/alpaca_${MODE}_${START}_${TODAY_UTC}_1min.csv"
-if [[ ! -f "$DATA" || ! -f "${DATA%.csv}.provenance.json" ]]; then
-  printf '\nFetching old historical SIP data only, no order placement.\n'
-  "$PYTHON_CMD" -m qc_trade.cli fetch-alpaca \
-    --symbols "$SYMBOLS" \
-    --start "$START" --end "$TODAY_UTC" \
-    --feed sip --out "$DATA"
-else
-  printf '\nUsing previously completed data: %s\n' "$DATA"
-fi
+mkdir -p "$OUTPUT"
+# Read-only checks + verified Parquet cache + manifest (resumes; reuses verified partitions).
+PYTHON_CMD="$PYTHON_CMD" bash scripts/fetch_real_data.sh "$MODE"
+DATA="data/alpaca_${MODE}_sip_raw_1min"
 
 "$PYTHON_CMD" -m qc_trade.cli backtest \
   --data "$DATA" --symbols "$SYMBOLS" \

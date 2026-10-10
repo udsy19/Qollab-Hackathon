@@ -14,10 +14,11 @@ Mission reports, audits and post-mortems — what a lane measured and what it de
 > next reader can find it. Delete it and nothing but navigation is lost; regenerate it
 > with `node scripts/vault-hubs.mjs`.
 
-## Notes here (2)
+## Notes here (3)
 
 - [[Reports/impact-qollab-qaoa|Impact track: the Qollab project impact-qollab/ (QAOA in Qiskit vs classical solvers)]]
 - [[Reports/impact-research-audit|Impact — QC-TRADE audit and backtest correctness fixes (Plan row 4)]]
+- [[Reports/impact-research-data|Impact: the read-only Alpaca historical-data pipeline (research-data)]]
 
 ## Below this folder
 

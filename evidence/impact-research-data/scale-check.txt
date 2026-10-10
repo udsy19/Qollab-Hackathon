@@ -1,0 +1,4 @@
+rows 4002480 sessions 696
+validate_minutes s 14.6 rejected 0
+aggregate_5min s 27.8 kept 696
+five_minute_frame s 0.9 rows 324432

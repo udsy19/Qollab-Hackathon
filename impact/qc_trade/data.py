@@ -12,25 +12,41 @@ import hashlib
 import csv
 import json
 import os
+import re
 import zipfile
-import requests
 import numpy as np
 import pandas as pd
 import exchange_calendars as xcals
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from .alpaca_paper import http_session, iter_bar_pages
 
 NY = 'America/New_York'
 FIELDS = ['timestamp', 'symbol', 'open', 'high', 'low', 'close', 'volume']
 FREE_SAMPLE_URL = 'https://historicaldata.net/file/stocks_sample_2022H2.zip'
 
 
-def http_session() -> requests.Session:
-    session = requests.Session()
-    session.mount('https://', HTTPAdapter(max_retries=Retry(
-        total=5, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])))
-    session.headers.update({'User-Agent': 'QC-TRADE-research/2.0'})
-    return session
+_OFFSET = r'(?:Z|[+-]\d{2}:?\d{2})$'
+
+
+def parse_timestamps(col: pd.Series) -> pd.Series:
+    """UTC timestamps, deciding time-zone awareness for EVERY row, not the first.
+
+    All rows offset-aware (``Z`` / ``+hh:mm``): each is converted with its own
+    offset, so -05:00 and -04:00 rows on either side of a DST change are both
+    right. All rows naive: they are New York wall-clock times, localized with
+    nonexistent/ambiguous DST times raising. A column mixing the two is refused.
+    """
+    if pd.api.types.is_datetime64_any_dtype(col):
+        if getattr(col.dt, 'tz', None) is not None:
+            return col.dt.tz_convert('UTC')
+        return col.dt.tz_localize(NY, ambiguous='raise', nonexistent='raise').dt.tz_convert('UTC')
+    aware = col.astype(str).str.strip().str.contains(_OFFSET, regex=True)
+    if aware.all():
+        return pd.to_datetime(col, utc=True, format='ISO8601')
+    if aware.any():
+        raise ValueError(f'timestamp column mixes timezone-aware and naive values '
+                         f'({int(aware.sum())} aware, {int((~aware).sum())} naive); refusing to guess')
+    return (pd.to_datetime(col, format='ISO8601')
+            .dt.tz_localize(NY, ambiguous='raise', nonexistent='raise').dt.tz_convert('UTC'))
 
 
 def normalize_minutes(df: pd.DataFrame) -> pd.DataFrame:
@@ -41,12 +57,7 @@ def normalize_minutes(df: pd.DataFrame) -> pd.DataFrame:
     d['symbol'] = d.symbol.astype(str).str.upper().str.strip()
     if (d.symbol.str.len() == 0).any():
         raise ValueError('Empty symbol')
-    probe = pd.to_datetime(d['timestamp'].iloc[0])
-    if probe.tzinfo is None:
-        times = pd.to_datetime(d.timestamp).dt.tz_localize(NY, ambiguous='raise', nonexistent='raise').dt.tz_convert('UTC')
-    else:
-        times = pd.to_datetime(d.timestamp, utc=True)
-    d['timestamp'] = times
+    d['timestamp'] = parse_timestamps(d['timestamp'])
     for key in ('open', 'high', 'low', 'close', 'volume'):
         d[key] = pd.to_numeric(d[key], errors='raise')
     v = d[['open', 'high', 'low', 'close', 'volume']].to_numpy(float)
@@ -64,11 +75,29 @@ def normalize_minutes(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def read_minute_csv(path: Path) -> pd.DataFrame:
+    """Read 1-minute bars from a CSV, a Parquet file, or a verified cache directory.
+
+    A directory must hold a `manifest.json` written by `qc_trade.fetch`; every
+    partition is SHA-256 checked against it before use (see `dataset.load_dataset`).
+    """
+    path = Path(path)
+    if path.is_dir():
+        from .dataset import load_dataset
+        return normalize_minutes(load_dataset(path))
+    if path.suffix == '.parquet':
+        return normalize_minutes(pd.read_parquet(path))
     return normalize_minutes(pd.read_csv(path))
 
 
 def file_sha256(path: Path, *, chunk_size: int = 1 << 20) -> str:
-    """Hash a large historical CSV without reading it entirely into memory."""
+    """Hash a large historical file without reading it entirely into memory.
+
+    For a cache directory, the hash of its manifest stands for the dataset: the
+    manifest pins the SHA-256 of every partition.
+    """
+    path = Path(path)
+    if path.is_dir():
+        path = path / 'manifest.json'
     hasher = hashlib.sha256()
     with Path(path).open('rb') as fh:
         for chunk in iter(lambda: fh.read(chunk_size), b''):
@@ -92,7 +121,6 @@ def download_alpaca(symbols: list[str], start: str, end: str,
         raise ValueError('feed must be sip or iex')
     if not symbols or len(symbols) != len(set(symbols)):
         raise ValueError('Symbols must be nonempty and unique')
-    import re
     if any(not re.fullmatch(r'[A-Z0-9.\-]{1,16}', sym) for sym in symbols):
         raise ValueError('Invalid stock/ETF ticker name')
     beginning = pd.Timestamp(start)
@@ -117,27 +145,14 @@ def download_alpaca(symbols: list[str], start: str, end: str,
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     partial = out.with_name(out.name + '.partial')
-    seen_tokens = set()
     # Stream page-by-page rather than accumulating millions of records in RAM.
+    # Pagination, backoff and the no-redirect rule live in alpaca_paper.iter_bar_pages.
     with partial.open('w', newline='', encoding='utf-8') as fh:
         writer = csv.DictWriter(fh, fieldnames=FIELDS)
         writer.writeheader()
-        while True:
-            try:
-                # Never forward API headers to a redirected domain.
-                res = sess.get('https://data.alpaca.markets/v2/stocks/bars',
-                               params=params,timeout=45,allow_redirects=False)
-            except requests.RequestException:
-                raise RuntimeError('Could not reach Alpaca market data API; check internet/DNS/firewall.') from None
-            if res.status_code == 401:
-                raise RuntimeError('Alpaca market data HTTP 401: revoked or invalid API credentials.')
-            if res.status_code == 403:
-                raise RuntimeError('Alpaca market data HTTP 403: check SIP/IEX feed entitlement.')
-            if res.status_code != 200:
-                raise RuntimeError(f'Alpaca market data HTTP {res.status_code}; no completed output was written.')
-            payload = res.json()
+        for page in iter_bar_pages(sess, params):
             records = []
-            for symbol, bars in payload.get('bars', {}).items():
+            for symbol, bars in page.items():
                 for b in bars:
                     records.append({'timestamp':b['t'],'symbol':symbol,'open':b['o'],
                                     'high':b['h'],'low':b['l'],'close':b['c'],'volume':b['v']})
@@ -148,13 +163,6 @@ def download_alpaca(symbols: list[str], start: str, end: str,
                     writer.writerow(record)
                 nrows += len(frame)
             pages += 1
-            token = payload.get('next_page_token')
-            if not token:
-                break
-            if token in seen_tokens:
-                raise RuntimeError('Alpaca repeated a pagination token; incomplete download stopped.')
-            seen_tokens.add(token)
-            params['page_token']=token
     if nrows == 0:
         raise ValueError('Alpaca returned zero bars; check timestamps, entitlement and symbols')
     # Only expose a complete file; no credentials appear in data/provenance.
@@ -204,6 +212,10 @@ def download_public_sample(out: Path, *, symbols=('SPY','KO','TSLA','TWTR')) -> 
     return meta
 
 
+REJECTION_POLICY = ('drop the session for all symbols when any symbol has a 5-minute bucket with fewer '
+                    'than min_one_minute_bars 1-minute bars; no fill, no partial sessions')
+
+
 @dataclass
 class BarPanel:
     open: pd.DataFrame
@@ -216,6 +228,15 @@ class BarPanel:
 def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_bars: int=5,
                    max_missing_session_fraction: float=.15) -> BarPanel:
     """Drop incomplete days rather than fabricating prices or trading through gaps.
+
+    Policy (REJECTION_POLICY): a 5-minute bar needs `min_one_minute_bars` of its
+    five 1-minute bars; a session in which ANY symbol misses one is dropped for
+    ALL symbols, so the panel is aligned and every kept session is the full XNYS
+    5-minute grid (what backtest.validate_panel requires). The cost is selection
+    bias towards calm days; it is measured, not hidden: `rejected_sessions`
+    names every failing symbol with its reason, `per_symbol_completeness` counts
+    them, and the fetch pipeline compares rejected vs kept daily ranges
+    (dataset.selection_bias). Do not lower thresholds to keep more days.
 
     Uses XNYS exchange sessions (holidays + early closes) and UTC keys (DST).
     Timestamps are 5min bar starts, next-bar open is never used in features.
@@ -237,6 +258,7 @@ def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_
     sessions = c.sessions_in_range(begin, finish)
     expected_dates = [str(x.date()) for x in sessions]
     frames, skipped = [], {}
+    complete = {sym: 0 for sym in symbols}
     for session in sessions:
         day = str(session.date())
         day_df = d.loc[d['_session'].eq(day)]
@@ -244,10 +266,9 @@ def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_
         market_close = c.session_close(session)
         labels = pd.date_range(market_open, market_close-pd.Timedelta(minutes=5), freq='5min')
         if day_df.empty:
-            skipped[day] = 'no bars in any candidate asset'
+            skipped[day] = {sym: 'no bars' for sym in symbols}
             continue
-        results = []
-        failed = False
+        results, failures = [], {}
         for sym in symbols:
             bars = day_df.loc[day_df.symbol.eq(sym)].set_index('timestamp').sort_index()
             bars = bars.loc[(bars.index >= market_open) & (bars.index < market_close)]
@@ -257,15 +278,17 @@ def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_
             counts = bars.close.resample('5min', origin=market_open, label='left', closed='left').count()
             valid = counts.reindex(labels, fill_value=0).ge(min_one_minute_bars)
             if not valid.all():
-                skipped[day] = f'{sym}: {int((~valid).sum())} 5m bars incomplete or missing'
-                failed = True
-                break
+                failures[sym] = f'{int((~valid).sum())} of {len(labels)} 5m bars incomplete or missing'
+                continue
+            complete[sym] += 1
             grouped = grouped.reindex(labels)
             grouped['symbol'] = sym
             grouped['timestamp'] = labels
             grouped['_session'] = day
             results.append(grouped.reset_index(drop=True))
-        if not failed:
+        if failures:
+            skipped[day] = failures
+        else:
             frames.extend(results)
     if not frames:
         raise ValueError(f'No complete shared trading sessions. Days rejected: {list(skipped.items())[:4]}; ' +
@@ -288,7 +311,10 @@ def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_
                     {'calendar':'XNYS', 'timezone':'America/New_York',
                      'timeframe':'5Min', 'min_one_minute_bars':min_one_minute_bars,
                      'session_count':len(expected_dates), 'kept_sessions':len(expected_dates)-len(skipped),
-                     'rejected_sessions':skipped,
+                     'rejected_sessions':skipped, 'rejection_policy':REJECTION_POLICY,
+                     'per_symbol_completeness':{sym: {'complete_sessions': complete[sym],
+                                                      'incomplete_sessions': len(expected_dates) - complete[sym]}
+                                                for sym in symbols},
                      'symbols':symbols,'first_utc':ix[0].isoformat(), 'last_utc':ix[-1].isoformat()})
 
 

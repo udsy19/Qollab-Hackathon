@@ -49,3 +49,17 @@ Branch `worktree-agent-a555f850f32975121`, last commit `e771796`, worktree clean
 What changed: a share/cash ledger with a fill log (fills at the next bar's open, sells before buys, buys capped at cash, whole shares by default), four labelled cost scenarios ("MODELED from OHLCV, not observed quotes"), an additive stress grid, an audit gate that requires a positive return under conservative costs, refusal of non-contiguous price panels, $25k default capital. The cost-scenario parameters are the agent's assumptions for liquid ETFs, not calibrated.
 
 Open items in other agents' files (`impact/AUDIT.md` O1–O7) were relayed: O1–O4 to research-solvers while it was still running (the QAOA "gap 0" result at n=6, k=2 is matched by uniform random sampling with the same shots, so it says nothing about the circuit); O5–O7 belong to research-data. Two proposals were filed through `scripts/propose.mjs` (`vault/_log/proposals.jsonl`): #1 challenges row 4's "red before the fix" premise (there was no leak to catch); #2 adds a random-sampling baseline to row 5.
+
+## research-data → `impact/` data pipeline
+
+Branch `worktree-agent-ab34ad640e652b34d`, last commit `4a44651` (it had already merged `main`), worktree clean; merged with no content conflicts.
+
+| check | command | result |
+|---|---|---|
+| full QC-TRADE suite on the merged tree (overseer's own run, Python 3.13, pandas from `impact/requirements.txt` + pyarrow) | `cd impact && python -m pytest -q -p no:cacheprovider` | `82 passed in 19.74s`, exit 0 |
+| the data tests can fail | agent's mutation run, `evidence/impact-research-data/sabotage.txt` | 25 of 25 mutations red |
+| dry runs touch no network and no keys | `evidence/impact-research-data/dry-run-{smoke,pilot,full}.txt` | exit 0; full mode = 204 symbol-month requests, latest permitted session 2026-10-09 |
+| GET-only, no order endpoint | read `impact/qc_trade/alpaca_paper.py`: one `_get_json` path, GET allow-list, no redirects | confirmed |
+| no credentials in source or outputs | `git grep` for the key prefixes on `HEAD`; the manifest records `credentials_recorded: false` | none found |
+
+Audit items O5–O7 (relayed to this agent while it ran) are fixed with tests: per-row timezone validation, an explicit configurable session-completeness policy with per-symbol rejection reasons and a selection-bias check, and distinct messages for connection, 401, 403, 429 and 5xx failures.
