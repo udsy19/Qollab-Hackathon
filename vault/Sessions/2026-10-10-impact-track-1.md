@@ -39,3 +39,8 @@ Read [[Vision]], [[Plan]], `vault/Research/qollab-platform-and-submission.md`; n
 - Owner rulings (AskUserQuestion, 2026-10-10): "Qollab slice first (Recommended)"; "Start Track 1 now (Recommended)"; Alpaca data: "I run the download".
 - Owner: "spin up multiple agents in parallel and get it done". Five overseer-dispatched agents, each on its own git worktree with its own files: qollab-qaoa (`impact-qollab/`), research-audit (backtest side of `impact/`), research-solvers (optimizer/benchmark side), research-data (Alpaca pipeline), impact-deliverables (page and video drafts, read-only). Plan rows 3–7.
 - Found: `~/agent-org` now belongs to another org ("ECHO: ONE OF ONE", repo `Qollab-Hackathon-Quantum-Unlocked`); our org was moved to `~/agent-org-qollab-hackathon` (bundle intact in its `archive/`). Not touched; the tmux org is not used for now.
+
+## Update 17:05 ET — first result and a git slip
+- impact-deliverables finished: `docs/impact/page-and-video.md` (page metadata, 2:30 video script, rubric self-check). It corrected the source-paper credit: arXiv 2504.07844 is proton-therapy beam angle optimisation; QC-TRADE borrows only its two-stage structure. Relayed to qollab-qaoa.
+- Slip: `git add -A` committed the four agent worktrees under `.claude/worktrees/` as gitlinks, and a `| tail` hid the red board, so it was pushed. Fixed forward (no force-push) in the next commit; `.claude/worktrees/` is now gitignored and `git ls-tree origin/main` holds none. Lesson: run the board with `set -o pipefail`.
+- Running: qollab-qaoa, research-audit, research-solvers, research-data (Plan rows 3–6).
