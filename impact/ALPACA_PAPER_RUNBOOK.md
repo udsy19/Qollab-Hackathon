@@ -24,7 +24,7 @@ bash scripts/fetch_real_data.sh full --dry-run      # optional: every GET it wou
 bash scripts/fetch_real_data.sh full                # prompts for the rotated PAPER key ID and secret, echo off
 ```
 
-`pilot` instead of `full` downloads from 2026-04-01 only. Options: `--feed sip|iex` (default `sip`), `--adjustment raw|split|dividend|all` (default `raw`). Exported `APCA_API_KEY_ID` / `APCA_API_SECRET_KEY` are used without a prompt. The run:
+Modes: `smoke` = the 28 calendar days before the latest permitted session (a few minutes; checks the whole path), `pilot` = from 2026-04-01 (what `run_research.sh pilot` backtests), `full` = from 2024-01-01. Options: `--feed sip|iex` (default `sip`), `--adjustment raw|split|dividend|all` (default `raw`). Exported `APCA_API_KEY_ID` / `APCA_API_SECRET_KEY` are used without a prompt; with neither exported nor a terminal it exits 2 instead of waiting. A successful run ends with one line, `SUMMARY: OK mode=... feed=... symbols=6 window=... sessions=... rejected=... minute_rows=... manifest=... sha256=... orders=0`. The run:
 
 1. `GET /v2/account`, `GET /v2/clock` on the **paper** host. Success proves the keys are paper keys; only status/blocked flags are kept, never the account number or balances.
 2. Probes **both** feeds with a 5-bar SPY request at the latest permitted session and reports `sip=` / `iex=` as `allowed`, `empty`, `forbidden` or `error-<status>`. If the requested feed is not `allowed` it **stops** (exit 3) and names the feed that answered; it never switches feed on its own.
@@ -58,7 +58,11 @@ Sessions come from `exchange-calendars` XNYS (holidays and early closes included
 
 ### Completeness rule
 
-A symbol-session is **rejected** if it has no regular-hours bars or any 5-minute bucket lacks one of its five 1-minute bars: exactly the rule `aggregate_5min` enforces (default `min_one_minute_bars=5`); one rejected symbol removes that session for all symbols. Flags, not rejections: zero-volume minutes (counted), minute-vs-daily volume ratio outside 0.5-1.5 (`daily_volume_mismatch`), overnight gaps, bars on non-session dates.
+A symbol-session is **rejected** if it has no regular-hours bars or any 5-minute bucket has fewer than `--min-minute-bars` 1-minute bars (default 5 = complete minutes only): exactly the rule and parameter `aggregate_5min` uses; one rejected symbol removes that session for all symbols, so every kept session is the full XNYS 5-minute grid that `backtest.validate_panel` demands. `rejected_sessions` names **every** failing symbol with its reason, `per_symbol_rejected` counts them, and `selection_bias` tests (one-sided Mann-Whitney on the daily (high - low) / close) whether rejected days are more volatile than kept ones; symbols with p < 0.05 are printed and recorded in the manifest. That bias is reported, never corrected by loosening the threshold.
+
+Timestamps (audit O5): awareness is decided for every row. All offset-aware rows are converted with their own offset; all naive rows are read as New York wall-clock time (nonexistent or ambiguous DST times raise); a mix is refused.
+
+Errors (audit O7): connection failure ("Could not connect"), 401 (credentials), 403 (entitlement), 429 after 6 attempts (rate limit) and 5xx after 6 attempts (server error, network reachable) each have their own message and exit. Flags, not rejections: zero-volume minutes (counted), minute-vs-daily volume ratio outside 0.5-1.5 (`daily_volume_mismatch`), overnight gaps, bars on non-session dates.
 
 ## Try the pilot
 
