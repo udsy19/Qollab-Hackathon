@@ -1,0 +1,6 @@
+{
+  "name": "story-ui",
+  "branch_prefix": "lane/story-ui",
+  "max_parallel": 1,
+  "may_land": true
+}

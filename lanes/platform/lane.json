@@ -1,0 +1,6 @@
+{
+  "name": "platform",
+  "branch_prefix": "lane/platform",
+  "max_parallel": 2,
+  "may_land": true
+}

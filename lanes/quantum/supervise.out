@@ -1,0 +1,4 @@
+2026-10-10 03:19 === CONSULT 1: supervisor planning (0 reports, 0 images, 22825 chars)
+2026-10-10 03:21 LEARN: Lane setup (consult 1): the worker model key is `opus` (org.json `worker_models`; `sonnet` also exists), and the lane's parallel cap is 2. The vision's §10.3 se
+2026-10-10 03:21 agent quantum-core (opus) start on lane/quantum/integration
+2026-10-10 03:21 agent backend-job (opus) start on lane/quantum/integration

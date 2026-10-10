@@ -1,0 +1,5 @@
+2026-10-10 03:19 === CONSULT 1: supervisor planning (0 reports, 0 images, 23122 chars)
+2026-10-10 03:21 LEARN: Lane opened 2026-10-09 ~23:20 ET with G0 overdue.  G0 cannot be marked done on local evidence. Only an owner-confirmed Qollab run recorded in `owner-answers.md`
+2026-10-10 03:21 ASK_OWNER: 1. **G0 needs you on Qollab tonight.** Once `echo/QOLLAB_SMOKE_TEST.md` lands (target: within ~1.5 h), can you upload `echo/` and run it once on the **built-in simulator**? Please paste what you see, 
+2026-10-10 03:21 agent g0-runner-smoke (opus) start on lane/platform/integration
+2026-10-10 03:21 agent shared-contracts (opus) start on lane/platform/integration

@@ -1,0 +1,5 @@
+2026-10-10 03:19 === CONSULT 1: supervisor planning (0 reports, 0 images, 22613 chars)
+2026-10-10 03:21 LEARN: Story-ui modules must not depend on anything the platform lane owns. On Qollab, `<script>` in `index.html` does not run, `main.css` is the only stylesheet loade
+2026-10-10 03:21 LEARN: Until the quantum lane ships its §8.4 adapter, terminal work uses a harness stub with `engine: 'documented_preview'` that returns only textbook-exact values. Th
+2026-10-10 03:21 ASK_OWNER: 1. **Credit names:** whose names should appear in the in-game credits and the README team credits, and in what form (real names, handles, roles)? Workers will leave a marked placeholder until you answ
+2026-10-10 03:21 agent ui-shell (opus) start on lane/story-ui/integration
