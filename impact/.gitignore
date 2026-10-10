@@ -1,0 +1,12 @@
+# Do not upload your brokerage credentials or licensed historical market data.
+.env
+*.env
+*.key
+*.pem
+/data/
+/outputs/real_*/
+/outputs/etfs_*/
+**/__pycache__/
+**/.pytest_cache/
+*.egg-info/
+.venv/

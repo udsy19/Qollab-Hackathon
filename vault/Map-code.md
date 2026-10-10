@@ -40,6 +40,7 @@ content-filtered); read only the files those two route you to.
 | `evidence/` | captures of record, linked by path from session notes and reports | `evidence/README.md` |
 | `templates/qollab-project/` | the skeleton every hackathon project starts from: a Qollab-ready `main.py`, `requirements.txt`, MIT `LICENSE` and the project-page `README.md` | `templates/qollab-project/README.md` |
 | `scripts/gates/qollab-submission.mjs` | checks every project folder against Qollab's and the hackathon's rules | the file's header |
+| `impact/` | Track 1, Quantum Impact: QC-TRADE as imported (QUBO portfolio selection, QAOA vs classical solvers, intraday backtest, read-only Alpaca data). Not yet a Qollab project: no `main.py`, no Qiskit | `impact/README.md`, then `impact/qc_trade/optimizer.py` |
 | *(project folders)* | one top-level folder per hackathon project, uploaded to Qollab as is — to come once the owner gives the vision | — | *one row per product area: what it is, and the file to open first* | |
 
 ## Core abstractions — the most connected symbols

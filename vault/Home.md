@@ -28,7 +28,7 @@ not append: superseded NOW text goes to a report under `Reports/`, linked from h
 
 | track | state |
 |---|---|
-| Quantum Impact | waiting on the owner's product vision |
+| Quantum Impact | vision given (2026-10-10): QC-TRADE, imported to `impact/`; gaps to Qollab in [[Research/impact-qc-trade-fit]] (no Qiskit yet, Alpaca can't run on Qollab, licensed data can't be bundled) |
 | Quantum Playground | waiting on the owner's product vision |
 | Quantum Unlocked | waiting on the owner's product vision |
 | repo requirements | done: MIT, attribution, `templates/qollab-project/`, `scripts/gates/qollab-submission.mjs` on the board |

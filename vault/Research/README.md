@@ -14,8 +14,9 @@ What exists outside this repo — competitor teardowns, library evaluations and 
 > next reader can find it. Delete it and nothing but navigation is lost; regenerate it
 > with `node scripts/vault-hubs.mjs`.
 
-## Notes here (1)
+## Notes here (2)
 
+- [[Research/impact-qc-trade-fit|Impact track: QC-TRADE against Qollab and the hackathon rules]]
 - [[Research/qollab-platform-and-submission|Qollab platform, runtime and hackathon submission: what a judge sees and does]]
 
 ---

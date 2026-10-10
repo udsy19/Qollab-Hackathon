@@ -1,0 +1,296 @@
+"""Credited / user-licensed historical US equity minute bars, strict normalization.
+
+The data contract uses a bar-start timestamp. Prices are RAW tradable prices,
+not dividend-adjusted closes, because the simulated strategy ends each session flat.
+No forward filling, no fabricated quotes, no cross-day price returns.
+"""
+from __future__ import annotations
+from dataclasses import dataclass
+from pathlib import Path
+from io import TextIOWrapper
+import hashlib
+import csv
+import json
+import os
+import zipfile
+import requests
+import numpy as np
+import pandas as pd
+import exchange_calendars as xcals
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+NY = 'America/New_York'
+FIELDS = ['timestamp', 'symbol', 'open', 'high', 'low', 'close', 'volume']
+FREE_SAMPLE_URL = 'https://historicaldata.net/file/stocks_sample_2022H2.zip'
+
+
+def http_session() -> requests.Session:
+    session = requests.Session()
+    session.mount('https://', HTTPAdapter(max_retries=Retry(
+        total=5, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])))
+    session.headers.update({'User-Agent': 'QC-TRADE-research/2.0'})
+    return session
+
+
+def normalize_minutes(df: pd.DataFrame) -> pd.DataFrame:
+    missing = set(FIELDS) - set(df.columns)
+    if missing:
+        raise ValueError(f'Missing OHLCV columns: {sorted(missing)}')
+    d = df[FIELDS].copy()
+    d['symbol'] = d.symbol.astype(str).str.upper().str.strip()
+    if (d.symbol.str.len() == 0).any():
+        raise ValueError('Empty symbol')
+    probe = pd.to_datetime(d['timestamp'].iloc[0])
+    if probe.tzinfo is None:
+        times = pd.to_datetime(d.timestamp).dt.tz_localize(NY, ambiguous='raise', nonexistent='raise').dt.tz_convert('UTC')
+    else:
+        times = pd.to_datetime(d.timestamp, utc=True)
+    d['timestamp'] = times
+    for key in ('open', 'high', 'low', 'close', 'volume'):
+        d[key] = pd.to_numeric(d[key], errors='raise')
+    v = d[['open', 'high', 'low', 'close', 'volume']].to_numpy(float)
+    if not np.isfinite(v).all() or (v[:, :4] <= 0).any() or (v[:, 4] < 0).any():
+        raise ValueError('Nonfinite, nonpositive OHLC, or negative volume')
+    if (d['high'] + 1e-8 < d[['open','close','low']].max(axis=1)).any():
+        raise ValueError('High must bound other OHLC')
+    if (d['low'] - 1e-8 > d[['open','close','high']].min(axis=1)).any():
+        raise ValueError('Low must bound other OHLC')
+    if d.duplicated(['timestamp','symbol']).any():
+        raise ValueError('Duplicate symbol-minute bars')
+    if not (d.timestamp.dt.second.eq(0) & d.timestamp.dt.microsecond.eq(0)).all():
+        raise ValueError('Expected 1-minute bucket-start timestamps')
+    return d.sort_values(['timestamp','symbol']).reset_index(drop=True)
+
+
+def read_minute_csv(path: Path) -> pd.DataFrame:
+    return normalize_minutes(pd.read_csv(path))
+
+
+def file_sha256(path: Path, *, chunk_size: int = 1 << 20) -> str:
+    """Hash a large historical CSV without reading it entirely into memory."""
+    hasher = hashlib.sha256()
+    with Path(path).open('rb') as fh:
+        for chunk in iter(lambda: fh.read(chunk_size), b''):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def download_alpaca(symbols: list[str], start: str, end: str,
+                    *, feed='sip', out: Path) -> dict:
+    """Download genuine historical minute bars, AUTH from environment only.
+
+    This is a pure read-only historical query against Alpaca's official data
+    domain, NOT a broker-order API call. The output file is atomically published
+    only after ALL API pages complete; an interruption leaves a .partial file.
+    """
+    key = os.getenv('APCA_API_KEY_ID')
+    secret = os.getenv('APCA_API_SECRET_KEY')
+    if not key or not secret:
+        raise RuntimeError('Set APCA_API_KEY_ID and APCA_API_SECRET_KEY in your shell; no hardcoded credentials')
+    if feed not in {'sip','iex'}:
+        raise ValueError('feed must be sip or iex')
+    if not symbols or len(symbols) != len(set(symbols)):
+        raise ValueError('Symbols must be nonempty and unique')
+    import re
+    if any(not re.fullmatch(r'[A-Z0-9.\-]{1,16}', sym) for sym in symbols):
+        raise ValueError('Invalid stock/ETF ticker name')
+    beginning = pd.Timestamp(start)
+    ending = pd.Timestamp(end)
+    if beginning.tzinfo is None:
+        beginning = beginning.tz_localize('UTC')
+    else:
+        beginning = beginning.tz_convert('UTC')
+    if ending.tzinfo is None:
+        ending = ending.tz_localize('UTC')
+    else:
+        ending = ending.tz_convert('UTC')
+    if not beginning < ending:
+        raise ValueError('Historical end must be after start')
+    params = {'symbols':','.join(symbols),'timeframe':'1Min',
+              'start':beginning.isoformat().replace('+00:00','Z'),
+              'end':ending.isoformat().replace('+00:00','Z'),
+              'limit':10000,'feed':feed,'adjustment':'raw','sort':'asc'}
+    sess = http_session()
+    sess.headers.update({'APCA-API-KEY-ID':key, 'APCA-API-SECRET-KEY':secret})
+    pages, nrows = 0, 0
+    out = Path(out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    partial = out.with_name(out.name + '.partial')
+    seen_tokens = set()
+    # Stream page-by-page rather than accumulating millions of records in RAM.
+    with partial.open('w', newline='', encoding='utf-8') as fh:
+        writer = csv.DictWriter(fh, fieldnames=FIELDS)
+        writer.writeheader()
+        while True:
+            try:
+                # Never forward API headers to a redirected domain.
+                res = sess.get('https://data.alpaca.markets/v2/stocks/bars',
+                               params=params,timeout=45,allow_redirects=False)
+            except requests.RequestException:
+                raise RuntimeError('Could not reach Alpaca market data API; check internet/DNS/firewall.') from None
+            if res.status_code == 401:
+                raise RuntimeError('Alpaca market data HTTP 401: revoked or invalid API credentials.')
+            if res.status_code == 403:
+                raise RuntimeError('Alpaca market data HTTP 403: check SIP/IEX feed entitlement.')
+            if res.status_code != 200:
+                raise RuntimeError(f'Alpaca market data HTTP {res.status_code}; no completed output was written.')
+            payload = res.json()
+            records = []
+            for symbol, bars in payload.get('bars', {}).items():
+                for b in bars:
+                    records.append({'timestamp':b['t'],'symbol':symbol,'open':b['o'],
+                                    'high':b['h'],'low':b['l'],'close':b['c'],'volume':b['v']})
+            if records:
+                frame=normalize_minutes(pd.DataFrame(records))
+                for record in frame.to_dict('records'):
+                    record['timestamp']=record['timestamp'].isoformat()
+                    writer.writerow(record)
+                nrows += len(frame)
+            pages += 1
+            token = payload.get('next_page_token')
+            if not token:
+                break
+            if token in seen_tokens:
+                raise RuntimeError('Alpaca repeated a pagination token; incomplete download stopped.')
+            seen_tokens.add(token)
+            params['page_token']=token
+    if nrows == 0:
+        raise ValueError('Alpaca returned zero bars; check timestamps, entitlement and symbols')
+    # Only expose a complete file; no credentials appear in data/provenance.
+    partial.replace(out)
+    meta = {'source':'Alpaca historical data API v2', 'feed':feed, 'adjustment':'raw',
+            'symbols':symbols, 'start_utc':beginning.isoformat(), 'end_utc':ending.isoformat(),
+            'rows':nrows, 'pages':pages, 'sha256':file_sha256(out)}
+    out.with_suffix('.provenance.json').write_text(json.dumps(meta, indent=2))
+    return meta
+
+
+def download_public_sample(out: Path, *, symbols=('SPY','KO','TSLA','TWTR')) -> dict:
+    """Download publisher's free, real, 2022H2 minute-bar sample.
+
+    Source data are not redistributed in this project. The site must remain online
+    for this convenience loader to work. Vendor's terms govern sample usage.
+    """
+    response = http_session().get(FREE_SAMPLE_URL, timeout=90)
+    response.raise_for_status()
+    from io import BytesIO
+    frames = []
+    with zipfile.ZipFile(BytesIO(response.content)) as z:
+        names = z.namelist()
+        for symbol in symbols:
+            matches = [x for x in names if x.lower().endswith('.csv') and 'minute_by_symbol' in x.lower()
+                       and Path(x).name.upper().startswith(symbol.upper()+'_')]
+            if not matches:
+                # Some publisher samples may use flat paths; match only known symbol names.
+                matches = [x for x in names if x.lower().endswith('.csv') and 'minute' in x.lower()
+                           and Path(x).name.upper().startswith(symbol.upper()+'_')]
+            if len(matches) != 1:
+                raise ValueError(f'Expected one minute CSV for {symbol}; found {matches} (archive: {names[:12]})')
+            with z.open(matches[0]) as member:
+                df = pd.read_csv(member)
+            if 'timestamp' not in df:
+                raise ValueError(f'Archive minute format changed: {matches[0]} columns={list(df)}')
+            df['symbol'] = symbol
+            frames.append(df[FIELDS])
+    result = normalize_minutes(pd.concat(frames, ignore_index=True))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    result.to_csv(out, index=False)
+    meta = {'source':FREE_SAMPLE_URL, 'source_period':'July-December 2022',
+            'symbols':list(symbols),'rows':len(result),
+            'sha256':hashlib.sha256(out.read_bytes()).hexdigest(),
+            'notice':'Historical data vendor sample; small pre-selected universe; insufficient for alpha claims'}
+    out.with_suffix('.provenance.json').write_text(json.dumps(meta, indent=2))
+    return meta
+
+
+@dataclass
+class BarPanel:
+    open: pd.DataFrame
+    close: pd.DataFrame
+    volume: pd.DataFrame
+    days: pd.Series           # UTC timestamp indexed -> New York session-date string
+    diagnostics: dict
+
+
+def aggregate_5min(minutes: pd.DataFrame, symbols: list[str], *, min_one_minute_bars: int=5,
+                   max_missing_session_fraction: float=.15) -> BarPanel:
+    """Drop incomplete days rather than fabricating prices or trading through gaps.
+
+    Uses XNYS exchange sessions (holidays + early closes) and UTC keys (DST).
+    Timestamps are 5min bar starts, next-bar open is never used in features.
+    Volume is observation, NOT necessarily consolidated all-exchange liquidity.
+    """
+    if not 1 <= min_one_minute_bars <= 5:
+        raise ValueError('min_one_minute_bars must be 1..5')
+    d = normalize_minutes(minutes)
+    symbols = [x.upper() for x in symbols]
+    if not symbols or len(symbols) != len(set(symbols)):
+        raise ValueError('Provide distinct symbols')
+    if set(symbols) - set(d.symbol.unique()):
+        raise ValueError(f'Symbols without minutes: {set(symbols)-set(d.symbol.unique())}')
+    c = xcals.get_calendar('XNYS')
+    d = d[d.symbol.isin(symbols)].copy()
+    ny_date = d.timestamp.dt.tz_convert(NY).dt.strftime('%Y-%m-%d')
+    d['_session'] = ny_date
+    begin, finish = ny_date.min(), ny_date.max()
+    sessions = c.sessions_in_range(begin, finish)
+    expected_dates = [str(x.date()) for x in sessions]
+    frames, skipped = [], {}
+    for session in sessions:
+        day = str(session.date())
+        day_df = d.loc[d['_session'].eq(day)]
+        market_open = c.session_open(session)
+        market_close = c.session_close(session)
+        labels = pd.date_range(market_open, market_close-pd.Timedelta(minutes=5), freq='5min')
+        if day_df.empty:
+            skipped[day] = 'no bars in any candidate asset'
+            continue
+        results = []
+        failed = False
+        for sym in symbols:
+            bars = day_df.loc[day_df.symbol.eq(sym)].set_index('timestamp').sort_index()
+            bars = bars.loc[(bars.index >= market_open) & (bars.index < market_close)]
+            grouped = bars[['open','high','low','close','volume']].resample('5min', origin=market_open,
+                            label='left', closed='left').agg({'open':'first','high':'max','low':'min',
+                                                              'close':'last','volume':'sum'})
+            counts = bars.close.resample('5min', origin=market_open, label='left', closed='left').count()
+            valid = counts.reindex(labels, fill_value=0).ge(min_one_minute_bars)
+            if not valid.all():
+                skipped[day] = f'{sym}: {int((~valid).sum())} 5m bars incomplete or missing'
+                failed = True
+                break
+            grouped = grouped.reindex(labels)
+            grouped['symbol'] = sym
+            grouped['timestamp'] = labels
+            grouped['_session'] = day
+            results.append(grouped.reset_index(drop=True))
+        if not failed:
+            frames.extend(results)
+    if not frames:
+        raise ValueError(f'No complete shared trading sessions. Days rejected: {list(skipped.items())[:4]}; ' +
+                         'IEX is sparse; SIP data or lower min_one_minute_bars may be needed')
+    share = len(skipped) / max(1, len(expected_dates))
+    if share > max_missing_session_fraction:
+        raise ValueError(f'Rejected {len(skipped)}/{len(expected_dates)} sessions ({share:.1%}), ' +
+                         'above allowed max_missing_session_fraction. Inspect missing bars; do not silently bias sample. ' +
+                         f'Examples: {list(skipped.items())[:6]}')
+    all_bars = pd.concat(frames, ignore_index=True)
+    mats = {}
+    for field in ['open','close','volume']:
+        mat = all_bars.pivot(index='timestamp', columns='symbol', values=field)[symbols]
+        if mat.isna().any().any() or mat.empty:
+            raise RuntimeError('Invalid alignment after session filtering')
+        mats[field] = mat
+    ix = mats['close'].index
+    days = pd.Series(ix.tz_convert(NY).strftime('%Y-%m-%d'), index=ix)
+    return BarPanel(mats['open'], mats['close'], mats['volume'], days,
+                    {'calendar':'XNYS', 'timezone':'America/New_York',
+                     'timeframe':'5Min', 'min_one_minute_bars':min_one_minute_bars,
+                     'session_count':len(expected_dates), 'kept_sessions':len(expected_dates)-len(skipped),
+                     'rejected_sessions':skipped,
+                     'symbols':symbols,'first_utc':ix[0].isoformat(), 'last_utc':ix[-1].isoformat()})
+
+
+def read_panel_csv(path: Path, symbols: list[str], **kwargs) -> BarPanel:
+    return aggregate_5min(read_minute_csv(path), symbols, **kwargs)

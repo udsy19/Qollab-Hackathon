@@ -1,0 +1,73 @@
+{
+  "version": "QC-TRADE intraday research v2",
+  "created_utc": "2026-10-10T05:21:40.251536+00:00",
+  "synthetic_data": true,
+  "real_profitability_claim": false,
+  "data_source": "synthetic",
+  "data_file_sha256": null,
+  "execution": {
+    "test_start": "2026-09-14",
+    "rebalance_minutes": 30,
+    "signal_start_minutes": 30,
+    "execution_lag_bars": 2,
+    "history_bars": 80,
+    "alpha_shrinkage": 0.3,
+    "starting_capital": 100000,
+    "spread_bps": 1.0,
+    "slippage_bps": 1.5,
+    "commission_bps": 0.2,
+    "impact_bps_at_1pct": 1.0,
+    "max_participation": 0.02,
+    "block_bootstrap_days": 5,
+    "bootstrap_reps": 600,
+    "seed": 77
+  },
+  "optimization": {
+    "k": 2,
+    "risk_aversion": 6.0,
+    "min_weight": 0.03,
+    "max_weight": 0.8,
+    "expected_cost_bps": 4.0,
+    "anneal_steps": 50,
+    "anneal_restarts": 2,
+    "qaoa_reps": 2,
+    "qaoa_maxiter": 30,
+    "qaoa_shots": 256,
+    "seed": 37
+  },
+  "diagnostics": {
+    "symbols": [
+      "SPY",
+      "QQQ",
+      "IWM",
+      "DIA",
+      "TLT",
+      "GLD"
+    ],
+    "test_start": "2026-09-14",
+    "oos_first_day": "2026-09-14",
+    "oos_last_day": "2026-09-25",
+    "no_overnight_exposure": true,
+    "daily_signal_lookback_excludes_overnight_gaps": true,
+    "fill": "next + 1 5min bar open from signal close",
+    "data_quality": {
+      "source": "SYNTHETIC SIMULATED MARKET; NOT REAL DATA",
+      "calendar": "XNYS",
+      "sessions": 19,
+      "timeframe": "5Min"
+    },
+    "methods": [
+      "anneal",
+      "milp_qubo",
+      "exact_qubo",
+      "greedy",
+      "topk",
+      "minvar",
+      "spy",
+      "equal",
+      "cash"
+    ],
+    "signals_oos": 120
+  },
+  "warning": "No historical positive P&L or quantum advantage is asserted by this program."
+}

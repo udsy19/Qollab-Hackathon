@@ -53,7 +53,7 @@ Each is one decision only a human can make. Nothing below is an agent's to perfo
 
 | # | the decision | why it blocks | cited |
 |---|---|---|---|
-| O1 | The product vision for each of the three tracks (Impact, Playground, Unlocked) | no project can be defined, researched or built without it; agents do not invent it | owner, 2026-10-10: "ill give you the product vision in a bit" |
+| O1 | The product vision for each of the three tracks (Impact given 2026-10-10: QC-TRADE; Playground and Unlocked pending) | no project can be defined, researched or built without it; agents do not invent it | owner, 2026-10-10: "ill give you the product vision in a bit" |
 | O2 | Whether the IonQ simulators cost credits for a signed-in account, and if so whether to spend them | eligibility needs a run on IonQ's simulator; the owner ruled "Free simulators only" and the live dialog says "Credits apply" | `vault/Research/qollab-platform-and-submission.md` § 2 |
 
 ## What this plan does NOT include

@@ -1,8 +1,8 @@
 ---
 type: dashboard
 status: current
-date: 2026-10-09
-updated: 2026-10-09
+date: 2026-10-10
+updated: 2026-10-10
 ---
 
 # Index — what has already been decided, measured or tried
@@ -12,7 +12,7 @@ updated: 2026-10-09
 > [!note] Signpost only.
 > Every line is the note's own first sentence, unedited. Nothing here is a new claim; if a line reads oddly, the note says it oddly.
 
-Measured 2026-10-09: **20 notes** carrying an answer.
+Measured 2026-10-10: **21 notes** carrying an answer.
 
 ## Promoted lessons — from the lanes
 
@@ -50,10 +50,11 @@ Decisions are law until superseded. Everything else describes; these DECIDE.
 | [[mission]] | Mission — <name> | proposed | {{date}} |  |
 | [[qollab-ionq-hackathon-2026]] | Mission — Ship three winning Qiskit projects for the Qolla | current | 2026-10-09 | The end state in one paragraph, and the NOW item on Home it serves. |
 
-## Research — what exists outside this repo  (1)
+## Research — what exists outside this repo  (2)
 
 | note | title | status | date | gist |
 |---|---|---|---|---|
+| [[impact-qc-trade-fit]] | Impact track: QC-TRADE against Qollab and the hackathon ru | current | 2026-10-10 | The owner's Track 1 (Quantum Impact) starting point is **QC-TRADE Intraday v2.1**, imported unchanged into `impact/` fro |
 | [[qollab-platform-and-submission]] | Qollab platform, runtime and hackathon submission: what a  | current | 2026-10-09 | Qollab runs each project **in the judge's browser** (Pyodide, Python 3.14, Qiskit 2.x). It hands the code a pre-made `ba |
 
 ## Sessions — what a day did  (3)
