@@ -12,7 +12,7 @@ updated: 2026-10-10
 > [!note] Signpost only.
 > Every line is the note's own first sentence, unedited. Nothing here is a new claim; if a line reads oddly, the note says it oddly.
 
-Measured 2026-10-10: **21 notes** carrying an answer.
+Measured 2026-10-10: **22 notes** carrying an answer.
 
 ## Promoted lessons — from the lanes
 
@@ -57,11 +57,12 @@ Decisions are law until superseded. Everything else describes; these DECIDE.
 | [[impact-qc-trade-fit]] | Impact track: QC-TRADE against Qollab and the hackathon ru | current | 2026-10-10 | The owner's Track 1 (Quantum Impact) starting point is **QC-TRADE Intraday v2.1**, imported unchanged into `impact/` fro |
 | [[qollab-platform-and-submission]] | Qollab platform, runtime and hackathon submission: what a  | current | 2026-10-09 | Qollab runs each project **in the judge's browser** (Pyodide, Python 3.14, Qiskit 2.x). It hands the code a pre-made `ba |
 
-## Sessions — what a day did  (3)
+## Sessions — what a day did  (4)
 
 | note | title | status | date | gist |
 |---|---|---|---|---|
 | [[session]] | {{date}} — <slug> | ? | {{date}} |  |
+| [[2026-10-10-impact-track-1]] | 2026-10-10 — impact-track-1 | ? | 2026-10-10 |  |
 | [[2026-10-09-three-tracks]] | 2026-10-09 — three-tracks | ? | 2026-10-09 |  |
 | [[2026-10-09-agent-org-setup]] | 2026-10-09 — agent-org-setup | ? | 2026-10-09 |  |
 

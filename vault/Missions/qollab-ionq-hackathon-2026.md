@@ -6,7 +6,7 @@ updated: 2026-10-09
 owner: supervisor
 accepted-by: owner
 accepted: 2026-10-09
-state: running
+state: paused
 ---
 
 # Mission — Ship three winning Qiskit projects for the Qollab x IonQ hackathon, one per track

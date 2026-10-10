@@ -17,7 +17,7 @@ bytes of each note, and fails if it stops being true.
 > next reader can find it. Delete it and nothing but navigation is lost; regenerate it
 > with `node scripts/vault-hubs.mjs`.
 
-Measured 2026-10-10: **35 notes** over 10 folders.
+Measured 2026-10-10: **36 notes** over 10 folders.
 
 
 ## Start here — the vault root
@@ -105,6 +105,7 @@ Folder README: [[Sessions/README]]
 
 - [[Sessions/2026-10-09-agent-org-setup|2026-10-09 — agent-org-setup]]
 - [[Sessions/2026-10-09-three-tracks|2026-10-09 — three-tracks]]
+- [[Sessions/2026-10-10-impact-track-1|2026-10-10 — impact-track-1]]
 - [[Sessions/README|Sessions/]]
 
 ## `Templates/`
