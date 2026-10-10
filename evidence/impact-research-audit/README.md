@@ -1,6 +1,6 @@
 # evidence/impact-research-audit — Plan row 4 (agent research-audit)
 
-All inputs are synthetic (`impact/qc_trade/demo.py`) or random test instances. Nothing here is market evidence.
+Reader: `docs/impact/INTEGRATION_AUDIT.md` (§ research-audit), which cites these files. All inputs are synthetic (`impact/qc_trade/demo.py`) or random test instances. Nothing here is market evidence.
 Run from `impact/` with the venv `/tmp/qct-venv` (`pip install -r impact/requirements.txt`, Python 3.13.0).
 
 | file | what it shows | how it was produced |

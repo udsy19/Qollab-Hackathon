@@ -34,3 +34,18 @@ Commands and outputs: `evidence/integration/verify_qaoa_circuits.py` → `VERIFY
 **Formulation notes:** both QAOA variants and all classical solvers share one QUBO. The X mixer adds λ(Σx−k)² with λ = 4·Σ|Q| (QC-TRADE's choice, which makes the feasible optimum the ground state); the XY mixer enforces cardinality exactly, by construction. Stage A (QUBO) scores equal weights, so the QUBO optimum (IWM+TLT) need not be the best portfolio after stage-B sizing (DIA+TLT is, on the default instance); the page states this as a property shared by every solver.
 
 **Not verified:** the Qiskit half has never run under Pyodide (stock Pyodide cannot `micropip install` Qiskit 2.x; Qollab ships its own build), so the run on Qollab itself is unverified; no IonQ run; whether `qiskit-ionq` accepts two circuits in one job.
+
+## research-audit → `impact/` backtest side (Plan row 4)
+
+Branch `worktree-agent-a555f850f32975121`, last commit `e771796`, worktree clean. Merged as `464a8dd`; the only conflicts were the generated vault pages (`Index.md`, `Map.md`, `Reports/README.md`), resolved by regenerating them, not by hand.
+
+| check | command | result |
+|---|---|---|
+| full QC-TRADE suite on the merged tree (overseer's own run) | `cd impact && python -m pytest -q` | `43 passed in 8.94s`, exit 0 (baseline was 28) |
+| the new integrity tests were red before the fixes | agent's log `evidence/impact-research-audit/integrity-red-before-fix.txt` at `45b6c3b` | `15 failed` |
+| no look-ahead leak in the original engine | `evidence/impact-research-audit/probe-leak-unmodified.txt` | perturbing future open/close/volume at 3 cut points changed nothing earlier, for 9 classical methods |
+| the tests can fail | sabotage rounds, `evidence/impact-research-audit/sabotage-round-2.txt` | 12 of 12 deliberate engine breaks caught |
+
+What changed: a share/cash ledger with a fill log (fills at the next bar's open, sells before buys, buys capped at cash, whole shares by default), four labelled cost scenarios ("MODELED from OHLCV, not observed quotes"), an additive stress grid, an audit gate that requires a positive return under conservative costs, refusal of non-contiguous price panels, $25k default capital. The cost-scenario parameters are the agent's assumptions for liquid ETFs, not calibrated.
+
+Open items in other agents' files (`impact/AUDIT.md` O1–O7) were relayed: O1–O4 to research-solvers while it was still running (the QAOA "gap 0" result at n=6, k=2 is matched by uniform random sampling with the same shots, so it says nothing about the circuit); O5–O7 belong to research-data. Two proposals were filed through `scripts/propose.mjs` (`vault/_log/proposals.jsonl`): #1 challenges row 4's "red before the fix" premise (there was no leak to catch); #2 adds a random-sampling baseline to row 5.
