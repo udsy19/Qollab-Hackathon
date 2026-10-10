@@ -10,7 +10,7 @@ import sys
 W = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PY = sys.executable
 CASES = [
-    ("second job: one run() per circuit", "impact-qollab/main.py", 'job_result = backend.run(compiled, shots=shots).result()',
+    ("second job: one run() per circuit", "impact-qollab/main.py", 'job_result = backend.run(compiled, shots=shots, **run_options).result()',
      'job_result = backend.run(compiled[:1], shots=shots).result(); backend.run(compiled[1:], shots=shots)'),
     ("Dicke angle off", "impact-qollab/qctrade/qaoa.py", 'acos(sqrt(1 / m))', 'acos(sqrt(1 / (m + 1)))'),
     ("Ising J doubled", "impact-qollab/qctrade/qaoa.py", 'J = np.triu(S, 1) / 2', 'J = np.triu(S, 1)'),

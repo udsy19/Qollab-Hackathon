@@ -1,0 +1,8 @@
+SABOTAGE [second job: one run() per circuit] -> exit 1; 6 FAIL; first: FAIL n=6 k=2: main() completes  (RuntimeError: only one job is allowed per code run); IMPACT-QOLLAB-RUN FAIL (6)
+SABOTAGE [Dicke angle off] -> exit 1; 1 FAIL; first: FAIL Dicke |D(n,k)> exact for n=2..8, all k  (wrong for [(2, 1), (3, 1), (3, 2), (4, 1), (4, 2)]); IMPACT-QOLLAB-RUN FAIL (1)
+SABOTAGE [Ising J doubled] -> exit 1; 1 FAIL; first: FAIL cost layer = exp(-i gamma x'Qx) up to global phase; IMPACT-QOLLAB-RUN FAIL (1)
+SABOTAGE [exact solver picks the worst] -> exit 1; 10 FAIL; first: FAIL n=6 k=2: reported exact optimum = independent brute force  ([1, 2] vs [2 4]); IMPACT-QOLLAB-RUN FAIL (10)
+SABOTAGE [SYNTHETIC warning dropped] -> exit 1; 5 FAIL; first: FAIL n=6 k=2: console warns the numbers are SYNTHETIC; IMPACT-QOLLAB-RUN FAIL (5)
+SABOTAGE [gap misreported] -> exit 1; 1 FAIL; first: FAIL n=8 k=4: every reported gap = E - E(brute force)  (['QAOA X mixer + penalty']); IMPACT-QOLLAB-RUN FAIL (1)
+SABOTAGE [XY mixer replaced by RX (breaks feasibility)] -> exit 1; 4 FAIL; first: FAIL n=6 k=3: XY-mixer samples all feasible  (0.8203125); IMPACT-QOLLAB-RUN FAIL (4)
+SABOTAGE SUMMARY: 7 of 7 caught

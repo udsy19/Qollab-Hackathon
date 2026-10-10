@@ -110,7 +110,10 @@ def main(n_assets: int = 6, k: int = 2, reps: int = 2, shots: int = 1024, seed: 
     print(f"Sending ONE job with both circuits ({shots} shots each) to {backend_name} ...")
     t0 = perf_counter()
     # ONE backend.run per run: IonQ backends accept exactly one job per run. Both circuits go in this call.
-    job_result = backend.run(compiled, shots=shots).result()
+    # The built-in simulator takes a sampling seed, so a judge's run reproduces the numbers on the project page;
+    # other backends get no extra option (an IonQ backend may reject unknown ones).
+    run_options = {"seed_simulator": seed} if backend_name == "basic_simulator" else {}
+    job_result = backend.run(compiled, shots=shots, **run_options).result()
     t_job = perf_counter() - t0
     print(f"  job finished in {t_job:.2f} s (shared by both circuits)")
 
@@ -184,7 +187,7 @@ def main(n_assets: int = 6, k: int = 2, reps: int = 2, shots: int = 1024, seed: 
         print(f"  {r['solver']}: best sample {'IS' if hit else 'is NOT'} the optimum; "
               f"{100 * r['feasible_frac']:.1f}% of shots feasible; P(optimum) {r['p_opt_sampled']:.3f} "
               f"vs {1 / comb(n_assets, k):.3f} for a random k-subset; {r['seconds']:.2f} s.")
-    print("  At this size exhaustive search is trivial, so QAOA cannot be faster or better here; the question this run")
+    print("  At this size exhaustive search is trivial, so QAOA cannot beat exhaustive search here; the question this run")
     print("  answers is how much probability QAOA puts on the optimum, and at what cost, against honest baselines.")
     print(f"\nTotal run time {perf_counter() - t_start:.1f} s. Jobs sent to the backend: 1.")
 
