@@ -44,3 +44,9 @@ Read [[Vision]], [[Plan]], `vault/Research/qollab-platform-and-submission.md`; n
 - impact-deliverables finished: `docs/impact/page-and-video.md` (page metadata, 2:30 video script, rubric self-check). It corrected the source-paper credit: arXiv 2504.07844 is proton-therapy beam angle optimisation; QC-TRADE borrows only its two-stage structure. Relayed to qollab-qaoa.
 - Slip: `git add -A` committed the four agent worktrees under `.claude/worktrees/` as gitlinks, and a `| tail` hid the red board, so it was pushed. Fixed forward (no force-push) in the next commit; `.claude/worktrees/` is now gitignored and `git ls-tree origin/main` holds none. Lesson: run the board with `set -o pipefail`.
 - Running: qollab-qaoa, research-audit, research-solvers, research-data (Plan rows 3–6).
+
+## Update — integration (owner's mission: finish and integrate all agents)
+- Recovery point: local tag `checkpoint/pre-integration-2026-10-10`. Owner: no pushes without authorisation from here on; all commits local.
+- Baseline: original `impact/` tests 28 passed on `main`.
+- qollab-qaoa merged as `d385242` after independent checks (Dicke state, `_ccry`, cost layer, XY cardinality, end-to-end run with 1 job): [[Reports/impact-qollab-qaoa]], `docs/impact/INTEGRATION_AUDIT.md`. Plan row 3 done. Only red board row: the missing YouTube link (owner action).
+- Still running: research-audit, research-solvers, research-data.
