@@ -38,9 +38,9 @@ content-filtered); read only the files those two route you to.
 | `scripts/lib/` | one owner per shared derivation: the protected list, the landing range, commit trailers, argv refusal, git env | `scripts/lib/protected-paths.mjs` |
 | `vault/` | mission control (this vault) | [[Home]] |
 | `evidence/` | captures of record, linked by path from session notes and reports | `evidence/README.md` |
-| `playground/` | the Quantum Playground project (Qiskit) | `playground/README.md` |
-| `unlocked/` | the Quantum Unlocked project (Qiskit) | `unlocked/README.md` |
-| `docs/` | Qollab project-page drafts and demo-video scripts | `docs/README.md` | *one row per product area: what it is, and the file to open first* | |
+| `templates/qollab-project/` | the skeleton every hackathon project starts from: a Qollab-ready `main.py`, `requirements.txt`, MIT `LICENSE` and the project-page `README.md` | `templates/qollab-project/README.md` |
+| `scripts/gates/qollab-submission.mjs` | checks every project folder against Qollab's and the hackathon's rules | the file's header |
+| *(project folders)* | one top-level folder per hackathon project, uploaded to Qollab as is — to come once the owner gives the vision | — | *one row per product area: what it is, and the file to open first* | |
 
 ## Core abstractions — the most connected symbols
 

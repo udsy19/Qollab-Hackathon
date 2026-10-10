@@ -12,7 +12,7 @@ updated: 2026-10-09
 > [!note] Signpost only.
 > Every line is the note's own first sentence, unedited. Nothing here is a new claim; if a line reads oddly, the note says it oddly.
 
-Measured 2026-10-09: **18 notes** carrying an answer.
+Measured 2026-10-09: **19 notes** carrying an answer.
 
 ## Promoted lessons — from the lanes
 
@@ -49,6 +49,12 @@ Decisions are law until superseded. Everything else describes; these DECIDE.
 |---|---|---|---|---|
 | [[mission]] | Mission — <name> | proposed | {{date}} |  |
 | [[qollab-ionq-hackathon-2026]] | Mission — Ship two winning Qiskit projects for the Qollab  | current | 2026-10-09 | The end state in one paragraph, and the NOW item on Home it serves. |
+
+## Research — what exists outside this repo  (1)
+
+| note | title | status | date | gist |
+|---|---|---|---|---|
+| [[qollab-platform-and-submission]] | Qollab platform, runtime and hackathon submission: what a  | current | 2026-10-09 | Qollab runs each project **in the judge's browser** (Pyodide, Python 3.14, Qiskit 2.x). It hands the code a pre-made `ba |
 
 ## Sessions — what a day did  (2)
 
@@ -98,6 +104,6 @@ A plan row can name a symbol that lives only on a branch. An agent that trusts `
 > [!warning] This section is NOT graded by `--check`, and everything above it is.
 > It is derived from git branch state, not from the vault, so it changes when a branch is created or deleted anywhere in the repo. Grading it made the gate report STALE for reasons the vault did not cause. Treat the numbers here as of the last regeneration, not as of now; treat a STALE verdict as a real claim about the vault.
 
-**No `lane/*` branch carries a commit origin/main lacks** (checked 12). Everything in flight has landed.
+**No `lane/*` branch carries a commit origin/main lacks** (checked 0). Everything in flight has landed.
 
 <!-- INDEX:VOLATILE-END -->

@@ -48,6 +48,8 @@ row 'agent-contract hook'         node scripts/hooks/agent-contract.test.mjs
 row 'propose channel'             node scripts/propose.test.mjs
 row 'where'                       node scripts/where.test.mjs
 row 'loop guard'                  bash scripts/loop-guard.count.test.sh
+row 'qollab submission'           node scripts/gates/qollab-submission.mjs
+row 'qollab submission selftest'  node scripts/gates/qollab-submission.mjs --selftest
 
 total=$(( ${#GREEN[@]} + ${#RED[@]} + ${#SKIP[@]} ))
 echo
