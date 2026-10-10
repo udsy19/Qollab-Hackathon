@@ -249,6 +249,36 @@ def summarise(out: Path, plan: list[dict]):
     return t, summary, not_run
 
 
+def _probe_one(task: dict) -> dict:
+    from .optimizer import milp_qubo, qubo_matrix
+    n, k, family, rlt, seed = task['n'], task['k'], task['family'], task['rlt'], task['instance']
+    if family == 'financial_hard':
+        inst = make_instance(n, k, seed, 'hard')
+        Q = qubo_matrix(inst['mu'], inst['cov'], inst['prev'], inst['cfg'])
+    else:  # non-financial control: dense indefinite Gaussian QUBO, the textbook hard case for linearised MILP
+        g = np.random.default_rng([seed, n, k, 99]).normal(size=(n, n))
+        Q = (g + g.T) / 2
+    tick = perf_counter()
+    try:
+        _, info = milp_qubo(Q, k, time_limit=task['time_limit'], rlt=rlt)
+        return {**task, 'seconds': perf_counter() - tick, **info, 'error': ''}
+    except Exception as err:
+        return {**task, 'seconds': perf_counter() - tick, 'milp_certified': False, 'error': repr(err)[:160]}
+
+
+def milp_probe(out: Path, workers: int, sizes=(20, 30, 50, 100), time_limit=60.0) -> 'pd.DataFrame':
+    """Where does the strong classical baseline get hard? Financial instances vs a random-QUBO control."""
+    import pandas as pd
+    tasks = [{'n': n, 'k': max(2, n // 5), 'family': fam, 'rlt': rlt, 'instance': s, 'time_limit': time_limit}
+             for fam in ('financial_hard', 'random_gaussian') for rlt in (True, False)
+             for n in sizes for s in range(2)]
+    with ProcessPoolExecutor(max_workers=workers, mp_context=get_context('spawn')) as pool:
+        rows = list(pool.map(_probe_one, tasks))
+    df = pd.DataFrame(rows)
+    df.to_csv(out / 'milp_probe.csv', index=False)
+    return df
+
+
 COLORS = {'exact_qubo': '#2a78d6', 'milp_qubo': '#eb6834', 'greedy': '#1baf7a', 'anneal': '#eda100',
           'random_khot': '#e87ba4', 'qaoa': '#6250d6', 'qaoa_xy': '#e34948', 'full_exact': '#008300'}
 MARKERS = {'exact_qubo': 'o', 'milp_qubo': 's', 'greedy': '^', 'anneal': 'v', 'random_khot': 'x',
@@ -322,10 +352,15 @@ def main(argv=None):
     ap.add_argument('--sizes', type=int, nargs='+', default=SIZES)
     ap.add_argument('--instances', type=int, default=3)
     ap.add_argument('--summarise-only', action='store_true')
+    ap.add_argument('--milp-probe', action='store_true', help='only run the MILP hardness probe')
     a = ap.parse_args(argv)
     for var in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS'):
         os.environ[var] = '1'  # single-threaded solves: fair comparison, moderate CPU on a shared laptop
     out = Path(a.out)
+    if a.milp_probe:
+        out.mkdir(parents=True, exist_ok=True)
+        print(milp_probe(out, a.workers).to_string(index=False))
+        return
     plan = plan_runs(sizes=a.sizes, seeds=tuple(range(a.instances)))
     if not a.summarise_only:
         execute(out, a.workers, plan)
