@@ -1,0 +1,4 @@
+2026-09-10 15:02:00+00:00 equity_before_cut_equal True orders_equal True 531 forecasts_equal True 15
+2026-09-11 13:30:00+00:00 equity_before_cut_equal True orders_equal True 609 forecasts_equal True 24
+2026-09-14 19:00:00+00:00 equity_before_cut_equal True orders_equal True 773 forecasts_equal True 47
+NO_LEAK_DETECTED

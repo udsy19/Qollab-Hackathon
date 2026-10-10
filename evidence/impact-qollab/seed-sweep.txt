@@ -1,0 +1,22 @@
+ n  k solver                    hit opt    P(opt) sampled mean [min,max]  P(opt) ideal mean  feasible %  mean s
+ 6  2 exact enumeration           10/10                                -                  -      100.0%   0.000
+ 6  2 MILP (HiGHS)                10/10                                -                  -      100.0%   0.005
+ 6  2 greedy + local swap         10/10                                -                  -      100.0%   0.000
+ 6  2 simulated annealing         10/10                                -                  -      100.0%   0.012
+ 6  2 QAOA X mixer + penalty      10/10              0.044 [0.021,0.071]              0.044       65.8%   0.421
+ 6  2 QAOA XY mixer               10/10              0.221 [0.034,0.497]              0.220      100.0%   0.599
+ 6  2 (random k-subset)                              0.067
+ 6  3 exact enumeration           10/10                                -                  -      100.0%   0.000
+ 6  3 MILP (HiGHS)                10/10                                -                  -      100.0%   0.004
+ 6  3 greedy + local swap         10/10                                -                  -      100.0%   0.000
+ 6  3 simulated annealing         10/10                                -                  -      100.0%   0.012
+ 6  3 QAOA X mixer + penalty      10/10              0.047 [0.037,0.058]              0.047       94.4%   0.424
+ 6  3 QAOA XY mixer               10/10              0.143 [0.045,0.303]              0.144      100.0%   0.691
+ 6  3 (random k-subset)                              0.050
+ 8  4 exact enumeration           10/10                                -                  -      100.0%   0.000
+ 8  4 MILP (HiGHS)                10/10                                -                  -      100.0%   0.008
+ 8  4 greedy + local swap         10/10                                -                  -      100.0%   0.000
+ 8  4 simulated annealing         10/10                                -                  -      100.0%   0.013
+ 8  4 QAOA X mixer + penalty      10/10              0.011 [0.002,0.021]              0.012       87.1%   0.635
+ 8  4 QAOA XY mixer               10/10              0.116 [0.070,0.144]              0.115      100.0%   1.200
+ 8  4 (random k-subset)                              0.014

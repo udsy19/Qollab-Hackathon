@@ -1,0 +1,2 @@
+benchmark reference (max_cases=150) ok, support [2 6 7]
+choose(full_exact) n=10 k=3 -> ValueError Too many supports for full continuous enumeration

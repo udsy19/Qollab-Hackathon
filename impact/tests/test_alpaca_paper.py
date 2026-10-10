@@ -117,7 +117,7 @@ def test_audit_refuses_synthetic_as_evidence(tmp_path):
     from pathlib import Path
     demo=Path(__file__).resolve().parents[1]/'outputs'/'demo'
     for filename in ['manifest.json','metrics_oos.csv','paired_bootstrap_vs_spy.csv',
-                     'cost_stress_grid.csv','solver_benchmark_summary.csv']:
+                     'cost_stress_grid.csv','cost_scenarios.csv','solver_benchmark_summary.csv']:
         shutil.copyfile(demo / filename, tmp_path / filename)
     r=audit_results(tmp_path)
     assert r['synthetic_data']

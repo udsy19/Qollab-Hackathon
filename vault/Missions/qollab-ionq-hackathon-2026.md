@@ -6,7 +6,7 @@ updated: 2026-10-09
 owner: supervisor
 accepted-by: owner
 accepted: 2026-10-09
-state: paused
+state: running
 ---
 
 # Mission — Ship three winning Qiskit projects for the Qollab x IonQ hackathon, one per track
@@ -19,7 +19,7 @@ state: paused
 
 **The goal:** By Oct 11 19:00 ET, publish three MIT-licensed Qiskit projects on Qollab, one per track: **Quantum Impact** (real-world problems with quantum + classical computing), **Quantum Playground** (playful, artistic or unexpected) and **Quantum Unlocked** (make the hardest quantum ideas click). Each runs on Qollab's free simulators including IonQ's, has a project page explaining what it does and how to run it, and a 2-3 minute public demo video.
 
-**State (2026-10-10):** the org is paused. The owner is about to give the product vision; research agents start from it. Nothing is built until then.
+**State (2026-10-10 17:00 ET):** Track 1 (Impact, QC-TRADE) is running: five parallel agents (Plan rows 3–7). Owner's rulings: the Qollab slice is the submission and comes first; the full research spec ([[Design/impact-qc-trade-spec]]) proceeds in parallel and is reported honestly; the owner runs the Alpaca download in their own terminal (agents never see keys). Tracks 2 and 3: waiting on the owner.
 
 **The bar:** Each project runs end-to-end on Qollab's free simulators (including IonQ's) with no sign-in friction, is MIT-licensed and published with a clear project page, has a 2-3 min demo video at a public link, and would score at the top of all four judging traits (novelty, technical execution, impact, documentation).
 

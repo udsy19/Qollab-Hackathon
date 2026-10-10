@@ -32,7 +32,7 @@ written after the fix can only confirm the fix (gate-independence law 3).
 
 ## Active order
 
-*The supervisor's current priority over the rows below, in one or two lines, with the date.*
+2026-10-10 17:00 ET (owner): Track 1 Qollab slice first (row 3), the full research platform in parallel (rows 4–6), page and video drafts (row 7). Rows 3–7 run in parallel as overseer-dispatched agents.
 
 ## The table
 
@@ -43,6 +43,11 @@ written after the fix can only confirm the fix (gate-independence law 3).
 | 1.2 | Declare every lane, its goal and its branches in `vault/Design/lanes-and-supervisors.md` | Track A | overseer | `node scripts/gates/vault-reachability.mjs` exits 0 with the note reachable | open |
 | 1.3 | Write the set-up session note, recording the interview verbatim, and regenerate the hubs and the Index | Track A | overseer | `node scripts/vault-hubs.mjs --check` and `python3 scripts/gen-subject-index.py --check` both exit 0 | open |
 | 2 | Each lane named at set-up delivers one result through the real product, judged by the owner by looking | `Roadmap.md:25` ("Every lane named at set-up has produced one result the owner judged by looking") | each lane supervisor | gate to write: per lane, the owner's verdict on a named evidence path, recorded in the lane's `owner-answers.md` | open |
+| 3 | Build `impact-qollab/`: the Qollab Qiskit project — portfolio-selection QUBO solved by X-mixer and XY-mixer QAOA in Qiskit vs exact, greedy, annealing and MILP on the same instance; one IonQ job per run | `Roadmap.md:30` ("Impact: runs end-to-end on Qollab's built-in simulator and on an IonQ simulator") | agent qollab-qaoa | `node scripts/gates/qollab-submission.mjs impact-qollab` exits 0 apart from the video link, plus a local run log in `evidence/impact-qollab/` | done:d385242 |
+| 4 | Audit `impact/` and fix backtest correctness (leakage, next-bar execution, cash accounting, cost scenarios), test-first | `Roadmap.md:29` ("Impact: product vision given by the owner and the project defined") | agent research-audit | gate to write: the future-price-perturbation test in `impact/tests/`, red before the fix | done:464a8dd |
+| 5 | Qiskit QAOA, HiGHS MILP and the solver scaling study (N = 6 to 100) in `impact/qc_trade/` | `Roadmap.md:29` ("Impact: product vision given by the owner and the project defined") | agent research-solvers | gate to write: `impact/tests/test_solvers*.py` (objective equivalence, feasibility, seed determinism) | in-flight:worktree-research-solvers |
+| 6 | Read-only Alpaca data pipeline: Parquet cache, manifest, calendar, completeness checks, and one owner-run fetch command | `Roadmap.md:29` ("Impact: product vision given by the owner and the project defined") | agent research-data | gate to write: `impact/tests/test_data*.py` with mocked HTTP | in-flight:worktree-research-data |
+| 7 | Impact project-page metadata, demo-video script and rubric self-check | `Roadmap.md:31` ("Impact: project page, demo video and `qollab-submission.mjs` green; published on Qollab") | agent impact-deliverables | gate to write: the owner's review of `docs/impact/page-and-video.md` | open |
 
 *Add product rows below these, numbered contiguously, each citing its Roadmap item.*
 

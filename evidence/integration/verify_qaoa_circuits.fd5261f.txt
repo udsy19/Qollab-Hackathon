@@ -1,0 +1,10 @@
+  ok   dicke n=4 k=2: support is exactly the k-hot strings, uniform 1/C(n,k)
+  ok   dicke n=6 k=2: support is exactly the k-hot strings, uniform 1/C(n,k)
+  ok   dicke n=6 k=3: support is exactly the k-hot strings, uniform 1/C(n,k)
+  ok   dicke n=5 k=1: support is exactly the k-hot strings, uniform 1/C(n,k)
+  ok   dicke n=6 k=5: support is exactly the k-hot strings, uniform 1/C(n,k)
+  ok   cost layer = exp(-i gamma E) up to a global phase
+  ok   XY mixer (3 layers, random angles): no probability leaves the k-hot subspace
+  ok   control: the X mixer DOES leave the k-hot subspace (the check can fail)
+VERIFY-QAOA-CIRCUITS PASS
+rc=0

@@ -33,3 +33,21 @@ Read [[Vision]], [[Plan]], `vault/Research/qollab-platform-and-submission.md`; n
 
 ## Next
 - The owner's answers, then research agents per track.
+
+## Update 17:00 ET — the owner's spec, rulings, and five agents
+- The owner's full QC-TRADE spec saved verbatim: [[Design/impact-qc-trade-spec]].
+- Owner rulings (AskUserQuestion, 2026-10-10): "Qollab slice first (Recommended)"; "Start Track 1 now (Recommended)"; Alpaca data: "I run the download".
+- Owner: "spin up multiple agents in parallel and get it done". Five overseer-dispatched agents, each on its own git worktree with its own files: qollab-qaoa (`impact-qollab/`), research-audit (backtest side of `impact/`), research-solvers (optimizer/benchmark side), research-data (Alpaca pipeline), impact-deliverables (page and video drafts, read-only). Plan rows 3–7.
+- Found: `~/agent-org` now belongs to another org ("ECHO: ONE OF ONE", repo `Qollab-Hackathon-Quantum-Unlocked`); our org was moved to `~/agent-org-qollab-hackathon` (bundle intact in its `archive/`). Not touched; the tmux org is not used for now.
+
+## Update 17:05 ET — first result and a git slip
+- impact-deliverables finished: `docs/impact/page-and-video.md` (page metadata, 2:30 video script, rubric self-check). It corrected the source-paper credit: arXiv 2504.07844 is proton-therapy beam angle optimisation; QC-TRADE borrows only its two-stage structure. Relayed to qollab-qaoa.
+- Slip: `git add -A` committed the four agent worktrees under `.claude/worktrees/` as gitlinks, and a `| tail` hid the red board, so it was pushed. Fixed forward (no force-push) in the next commit; `.claude/worktrees/` is now gitignored and `git ls-tree origin/main` holds none. Lesson: run the board with `set -o pipefail`.
+- Running: qollab-qaoa, research-audit, research-solvers, research-data (Plan rows 3–6).
+
+## Update — integration (owner's mission: finish and integrate all agents)
+- Recovery point: local tag `checkpoint/pre-integration-2026-10-10`. Owner: no pushes without authorisation from here on; all commits local.
+- Baseline: original `impact/` tests 28 passed on `main`.
+- qollab-qaoa merged as `d385242` after independent checks (Dicke state, `_ccry`, cost layer, XY cardinality, end-to-end run with 1 job): [[Reports/impact-qollab-qaoa]], `docs/impact/INTEGRATION_AUDIT.md`. Plan row 3 done. Only red board row: the missing YouTube link (owner action).
+- Still running: research-audit, research-solvers, research-data.
+- research-audit merged as `464a8dd` (43 tests pass on the merged tree, overseer's own run); [[Reports/impact-research-audit]], `impact/AUDIT.md`. Plan row 4 done. Relayed O1–O4 to research-solvers (QAOA "gap 0" at n=6, k=2 is matched by random sampling) and O5–O7 to research-data.

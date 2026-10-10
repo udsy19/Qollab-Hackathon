@@ -1,0 +1,271 @@
+FFFFFFFFFFFFFFF                                                          [100%]
+=================================== FAILURES ===================================
+__ test_future_price_perturbation_does_not_change_past[2026-09-10T15:02:00Z] ___
+
+panel = BarPanel(open=                                  SPY         QQQ         IWM         DIA
+2026-09-01 13:30:00+00:00  109...stics={'source': 'SYNTHETIC SIMULATED MARKET; NOT REAL DATA', 'calendar': 'XNYS', 'sessions': 10, 'timeframe': '5Min'})
+cfg = ExecutionConfig(test_start='2026-09-09', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...commission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=1.0, block_bootstrap_days=5, bootstrap_reps=600, seed=77)
+opt = OptConfig(k=2, risk_aversion=6.0, min_weight=0.03, max_weight=0.8, expected_cost_bps=4.0, anneal_steps=60, anneal_restarts=2, qaoa_reps=2, qaoa_maxiter=80, qaoa_shots=1024, seed=37)
+result = BacktestResult(equity=                                  anneal  ...      cash
+2026-09-01 13:30:00+00:00  100000.000000...ethods': ['anneal', 'milp_qubo', 'exact_qubo', 'greedy', 'topk', 'minvar', 'spy', 'equal', 'cash'], 'signals_oos': 60})
+cut = Timestamp('2026-09-10 15:02:00+0000', tz='UTC')
+
+    @pytest.mark.parametrize('cut', ['2026-09-10T15:02:00Z',   # mid-session, between bar boundaries
+                                     '2026-09-11T13:30:00Z',   # exactly a session open
+                                     '2026-09-14T19:00:00Z'])  # late session, near forced flat
+    def test_future_price_perturbation_does_not_change_past(panel, cfg, opt, result, cut):
+        cut = pd.Timestamp(cut)
+        other = run_backtest(_perturb_from(panel, cut, seed=1), cfg, opt, ALL)
+        # Decisions made on a signal bar that CLOSED by the cut must be identical,
+        # even when their fill lands after the cut.
+>       a = _before(result.decisions, 'signal_time_utc', cut + pd.Timedelta(seconds=1))
+                    ^^^^^^^^^^^^^^^^
+E       AttributeError: 'BacktestResult' object has no attribute 'decisions'
+
+tests/test_backtest_integrity.py:69: AttributeError
+__ test_future_price_perturbation_does_not_change_past[2026-09-11T13:30:00Z] ___
+
+panel = BarPanel(open=                                  SPY         QQQ         IWM         DIA
+2026-09-01 13:30:00+00:00  109...stics={'source': 'SYNTHETIC SIMULATED MARKET; NOT REAL DATA', 'calendar': 'XNYS', 'sessions': 10, 'timeframe': '5Min'})
+cfg = ExecutionConfig(test_start='2026-09-09', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...commission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=1.0, block_bootstrap_days=5, bootstrap_reps=600, seed=77)
+opt = OptConfig(k=2, risk_aversion=6.0, min_weight=0.03, max_weight=0.8, expected_cost_bps=4.0, anneal_steps=60, anneal_restarts=2, qaoa_reps=2, qaoa_maxiter=80, qaoa_shots=1024, seed=37)
+result = BacktestResult(equity=                                  anneal  ...      cash
+2026-09-01 13:30:00+00:00  100000.000000...ethods': ['anneal', 'milp_qubo', 'exact_qubo', 'greedy', 'topk', 'minvar', 'spy', 'equal', 'cash'], 'signals_oos': 60})
+cut = Timestamp('2026-09-11 13:30:00+0000', tz='UTC')
+
+    @pytest.mark.parametrize('cut', ['2026-09-10T15:02:00Z',   # mid-session, between bar boundaries
+                                     '2026-09-11T13:30:00Z',   # exactly a session open
+                                     '2026-09-14T19:00:00Z'])  # late session, near forced flat
+    def test_future_price_perturbation_does_not_change_past(panel, cfg, opt, result, cut):
+        cut = pd.Timestamp(cut)
+        other = run_backtest(_perturb_from(panel, cut, seed=1), cfg, opt, ALL)
+        # Decisions made on a signal bar that CLOSED by the cut must be identical,
+        # even when their fill lands after the cut.
+>       a = _before(result.decisions, 'signal_time_utc', cut + pd.Timedelta(seconds=1))
+                    ^^^^^^^^^^^^^^^^
+E       AttributeError: 'BacktestResult' object has no attribute 'decisions'
+
+tests/test_backtest_integrity.py:69: AttributeError
+__ test_future_price_perturbation_does_not_change_past[2026-09-14T19:00:00Z] ___
+
+panel = BarPanel(open=                                  SPY         QQQ         IWM         DIA
+2026-09-01 13:30:00+00:00  109...stics={'source': 'SYNTHETIC SIMULATED MARKET; NOT REAL DATA', 'calendar': 'XNYS', 'sessions': 10, 'timeframe': '5Min'})
+cfg = ExecutionConfig(test_start='2026-09-09', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...commission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=1.0, block_bootstrap_days=5, bootstrap_reps=600, seed=77)
+opt = OptConfig(k=2, risk_aversion=6.0, min_weight=0.03, max_weight=0.8, expected_cost_bps=4.0, anneal_steps=60, anneal_restarts=2, qaoa_reps=2, qaoa_maxiter=80, qaoa_shots=1024, seed=37)
+result = BacktestResult(equity=                                  anneal  ...      cash
+2026-09-01 13:30:00+00:00  100000.000000...ethods': ['anneal', 'milp_qubo', 'exact_qubo', 'greedy', 'topk', 'minvar', 'spy', 'equal', 'cash'], 'signals_oos': 60})
+cut = Timestamp('2026-09-14 19:00:00+0000', tz='UTC')
+
+    @pytest.mark.parametrize('cut', ['2026-09-10T15:02:00Z',   # mid-session, between bar boundaries
+                                     '2026-09-11T13:30:00Z',   # exactly a session open
+                                     '2026-09-14T19:00:00Z'])  # late session, near forced flat
+    def test_future_price_perturbation_does_not_change_past(panel, cfg, opt, result, cut):
+        cut = pd.Timestamp(cut)
+        other = run_backtest(_perturb_from(panel, cut, seed=1), cfg, opt, ALL)
+        # Decisions made on a signal bar that CLOSED by the cut must be identical,
+        # even when their fill lands after the cut.
+>       a = _before(result.decisions, 'signal_time_utc', cut + pd.Timedelta(seconds=1))
+                    ^^^^^^^^^^^^^^^^
+E       AttributeError: 'BacktestResult' object has no attribute 'decisions'
+
+tests/test_backtest_integrity.py:69: AttributeError
+_____________ test_equity_is_cash_plus_holdings_rebuilt_from_fills _____________
+
+panel = BarPanel(open=                                  SPY         QQQ         IWM         DIA
+2026-09-01 13:30:00+00:00  109...stics={'source': 'SYNTHETIC SIMULATED MARKET; NOT REAL DATA', 'calendar': 'XNYS', 'sessions': 10, 'timeframe': '5Min'})
+result = BacktestResult(equity=                                  anneal  ...      cash
+2026-09-01 13:30:00+00:00  100000.000000...ethods': ['anneal', 'milp_qubo', 'exact_qubo', 'greedy', 'topk', 'minvar', 'spy', 'equal', 'cash'], 'signals_oos': 60})
+cfg = ExecutionConfig(test_start='2026-09-09', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...commission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=1.0, block_bootstrap_days=5, bootstrap_reps=600, seed=77)
+
+    def test_equity_is_cash_plus_holdings_rebuilt_from_fills(panel, result, cfg):
+        """Re-derive NAV from the fill log and market closes, independently of the engine's NAV."""
+        symbols = list(panel.close.columns)
+        closes = panel.close.to_numpy(float)
+>       fills = result.fills
+                ^^^^^^^^^^^^
+E       AttributeError: 'BacktestResult' object has no attribute 'fills'
+
+tests/test_backtest_integrity.py:89: AttributeError
+_________________________ test_whole_shares_by_default _________________________
+
+result = BacktestResult(equity=                                  anneal  ...      cash
+2026-09-01 13:30:00+00:00  100000.000000...ethods': ['anneal', 'milp_qubo', 'exact_qubo', 'greedy', 'topk', 'minvar', 'spy', 'equal', 'cash'], 'signals_oos': 60})
+
+    def test_whole_shares_by_default(result):
+>       s = result.fills.shares.to_numpy(float)
+            ^^^^^^^^^^^^
+E       AttributeError: 'BacktestResult' object has no attribute 'fills'
+
+tests/test_backtest_integrity.py:111: AttributeError
+___________ test_fills_are_at_a_later_bar_open_never_the_signal_bar ____________
+
+panel = BarPanel(open=                                  SPY         QQQ         IWM         DIA
+2026-09-01 13:30:00+00:00  109...stics={'source': 'SYNTHETIC SIMULATED MARKET; NOT REAL DATA', 'calendar': 'XNYS', 'sessions': 10, 'timeframe': '5Min'})
+result = BacktestResult(equity=                                  anneal  ...      cash
+2026-09-01 13:30:00+00:00  100000.000000...ethods': ['anneal', 'milp_qubo', 'exact_qubo', 'greedy', 'topk', 'minvar', 'spy', 'equal', 'cash'], 'signals_oos': 60})
+cfg = ExecutionConfig(test_start='2026-09-09', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...commission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=1.0, block_bootstrap_days=5, bootstrap_reps=600, seed=77)
+
+    def test_fills_are_at_a_later_bar_open_never_the_signal_bar(panel, result, cfg):
+        opens = panel.open.to_numpy(float)
+        symbols = list(panel.close.columns)
+>       rebal = result.fills[~result.fills.forced]
+                ^^^^^^^^^^^^
+E       AttributeError: 'BacktestResult' object has no attribute 'fills'
+
+tests/test_backtest_integrity.py:118: AttributeError
+___________ test_flat_at_every_session_end_and_liquidation_is_costed ___________
+
+panel = BarPanel(open=                                  SPY         QQQ         IWM         DIA
+2026-09-01 13:30:00+00:00  109...stics={'source': 'SYNTHETIC SIMULATED MARKET; NOT REAL DATA', 'calendar': 'XNYS', 'sessions': 10, 'timeframe': '5Min'})
+result = BacktestResult(equity=                                  anneal  ...      cash
+2026-09-01 13:30:00+00:00  100000.000000...ethods': ['anneal', 'milp_qubo', 'exact_qubo', 'greedy', 'topk', 'minvar', 'spy', 'equal', 'cash'], 'signals_oos': 60})
+
+    def test_flat_at_every_session_end_and_liquidation_is_costed(panel, result):
+        days = panel.days.to_numpy()
+        last = np.r_[days[1:] != days[:-1], True]
+        symbols = list(panel.close.columns)
+        for method in ALL:
+>           f = result.fills[result.fills.method == method]
+                ^^^^^^^^^^^^
+E           AttributeError: 'BacktestResult' object has no attribute 'fills'
+
+tests/test_backtest_integrity.py:137: AttributeError
+_____________________ test_noncontiguous_panel_is_refused ______________________
+
+panel = BarPanel(open=                                  SPY         QQQ         IWM         DIA
+2026-09-01 13:30:00+00:00  109...stics={'source': 'SYNTHETIC SIMULATED MARKET; NOT REAL DATA', 'calendar': 'XNYS', 'sessions': 10, 'timeframe': '5Min'})
+cfg = ExecutionConfig(test_start='2026-09-09', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...commission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=1.0, block_bootstrap_days=5, bootstrap_reps=600, seed=77)
+opt = OptConfig(k=2, risk_aversion=6.0, min_weight=0.03, max_weight=0.8, expected_cost_bps=4.0, anneal_steps=60, anneal_restarts=2, qaoa_reps=2, qaoa_maxiter=80, qaoa_shots=1024, seed=37)
+
+    def test_noncontiguous_panel_is_refused(panel, cfg, opt):
+        keep = np.ones(len(panel.close), bool)
+        keep[500] = False   # a missing mid-session 5m bar: a halt or a data hole
+        holed = BarPanel(panel.open[keep], panel.close[keep], panel.volume[keep],
+                         panel.days[keep], panel.diagnostics)
+>       with pytest.raises(ValueError, match='contiguous'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_backtest_integrity.py:155: Failed
+___________ test_zero_extra_stress_equals_base_and_cost_is_additive ____________
+
+panel = BarPanel(open=                                  SPY         QQQ         IWM         DIA
+2026-09-01 13:30:00+00:00  109...stics={'source': 'SYNTHETIC SIMULATED MARKET; NOT REAL DATA', 'calendar': 'XNYS', 'sessions': 10, 'timeframe': '5Min'})
+cfg = ExecutionConfig(test_start='2026-09-09', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...commission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=1.0, block_bootstrap_days=5, bootstrap_reps=600, seed=77)
+opt = OptConfig(k=2, risk_aversion=6.0, min_weight=0.03, max_weight=0.8, expected_cost_bps=4.0, anneal_steps=60, anneal_restarts=2, qaoa_reps=2, qaoa_maxiter=80, qaoa_shots=1024, seed=37)
+
+    def test_zero_extra_stress_equals_base_and_cost_is_additive(panel, cfg, opt):
+        base = run_backtest(panel, cfg, opt, ['topk', 'spy'])
+>       grid = bt.cost_stress_grid(panel, cfg, opt, ['topk', 'spy'], [0.0, 5.0])
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'qc_trade.backtest' has no attribute 'cost_stress_grid'
+
+tests/test_backtest_integrity.py:161: AttributeError
+_____________________ test_four_cost_scenarios_are_ordered _____________________
+
+panel = BarPanel(open=                                  SPY         QQQ         IWM         DIA
+2026-09-01 13:30:00+00:00  109...stics={'source': 'SYNTHETIC SIMULATED MARKET; NOT REAL DATA', 'calendar': 'XNYS', 'sessions': 10, 'timeframe': '5Min'})
+cfg = ExecutionConfig(test_start='2026-09-09', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...commission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=1.0, block_bootstrap_days=5, bootstrap_reps=600, seed=77)
+opt = OptConfig(k=2, risk_aversion=6.0, min_weight=0.03, max_weight=0.8, expected_cost_bps=4.0, anneal_steps=60, anneal_restarts=2, qaoa_reps=2, qaoa_maxiter=80, qaoa_shots=1024, seed=37)
+
+    def test_four_cost_scenarios_are_ordered(panel, cfg, opt):
+>       assert list(bt.COST_SCENARIOS) == ['optimistic', 'base', 'conservative', 'severe_stress']
+                    ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'qc_trade.backtest' has no attribute 'COST_SCENARIOS'
+
+tests/test_backtest_integrity.py:171: AttributeError
+_ test_audit_never_validates_a_strategy_profitable_only_under_optimistic_costs _
+
+tmp_path = PosixPath('/private/var/folders/m8/w_4jf2z54834ck071hw71p280000gn/T/pytest-of-udsy/pytest-549/test_audit_never_validates_a_s0')
+
+    def test_audit_never_validates_a_strategy_profitable_only_under_optimistic_costs(tmp_path):
+        _audit_dir(tmp_path, {'optimistic': .05, 'base': .02, 'conservative': -.01, 'severe_stress': -.04})
+        report = audit_results(tmp_path, method='milp_qubo')
+>       assert report['gates']['positive_oos_net_return_conservative_costs'] is False
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'positive_oos_net_return_conservative_costs'
+
+tests/test_backtest_integrity.py:206: KeyError
+________ test_audit_passes_cost_gate_only_when_conservative_is_positive ________
+
+tmp_path = PosixPath('/private/var/folders/m8/w_4jf2z54834ck071hw71p280000gn/T/pytest-of-udsy/pytest-549/test_audit_passes_cost_gate_on0')
+
+    def test_audit_passes_cost_gate_only_when_conservative_is_positive(tmp_path):
+        _audit_dir(tmp_path, {'optimistic': .05, 'base': .04, 'conservative': .01, 'severe_stress': -.04})
+        report = audit_results(tmp_path, method='milp_qubo')
+>       assert report['gates']['positive_oos_net_return_conservative_costs'] is True
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'positive_oos_net_return_conservative_costs'
+
+tests/test_backtest_integrity.py:213: KeyError
+__________ test_audit_missing_cost_scenarios_is_a_failure_not_a_skip ___________
+
+tmp_path = PosixPath('/private/var/folders/m8/w_4jf2z54834ck071hw71p280000gn/T/pytest-of-udsy/pytest-549/test_audit_missing_cost_scenar0')
+
+    def test_audit_missing_cost_scenarios_is_a_failure_not_a_skip(tmp_path):
+        _audit_dir(tmp_path, None)
+>       with pytest.raises(FileNotFoundError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE FileNotFoundError
+
+tests/test_backtest_integrity.py:219: Failed
+_____________ test_synthetic_panel_supports_more_than_six_symbols ______________
+
+    def test_synthetic_panel_supports_more_than_six_symbols():
+>       p = synthetic_panel(start='2026-09-01', end='2026-09-03', symbols=tuple('ABCDEFGH'))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_backtest_integrity.py:224: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+start = '2026-09-01', end = '2026-09-03', seed = 22
+symbols = ('A', 'B', 'C', 'D', 'E', 'F', ...)
+
+    def synthetic_panel(*, start='2026-08-31', end='2026-09-25', seed=22,
+                        symbols=('SPY','QQQ','IWM','DIA','TLT','GLD')) -> BarPanel:
+        c = xcals.get_calendar('XNYS')
+        sessions = c.sessions_in_range(start,end)
+        rng = np.random.default_rng(seed)
+        n = len(symbols)
+        current = 100 + 25*rng.random(n)
+        open_mat, close_mat, vol_mat, times = [], [], [], []
+        for si,day in enumerate(sessions):
+            interval = pd.date_range(c.session_open(day),c.session_close(day)-pd.Timedelta(minutes=5),freq='5min')
+            # Changes in drift and correlations deliberately illustrate regime shift.
+            base_drift = (-.00003 if si > len(sessions)//2 else .00003)
+            overnight = rng.normal(0,.004,n)
+            current = current*(1+overnight)
+            for b,ts in enumerate(interval):
+                market = rng.normal(base_drift,.0009)
+                shocks = rng.normal(0,.0008,n)
+>               rets = market*np.array([1.,1.2,1.4,1.05,-.1,.3])[:n] + shocks
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               ValueError: operands could not be broadcast together with shapes (6,) (8,)
+
+qc_trade/demo.py:26: ValueError
+_______________________ test_default_capital_is_spec_25k _______________________
+
+    def test_default_capital_is_spec_25k():
+>       assert ExecutionConfig().starting_capital == 25_000
+E       AssertionError: assert 100000 == 25000
+E        +  where 100000 = ExecutionConfig(test_start='2022-09-01', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...ommission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=0.02, block_bootstrap_days=5, bootstrap_reps=600, seed=77).starting_capital
+E        +    where ExecutionConfig(test_start='2022-09-01', rebalance_minutes=30, signal_start_minutes=30, execution_lag_bars=2, history_...ommission_bps=0.2, impact_bps_at_1pct=1.0, max_participation=0.02, block_bootstrap_days=5, bootstrap_reps=600, seed=77) = ExecutionConfig()
+
+tests/test_backtest_integrity.py:229: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_backtest_integrity.py::test_future_price_perturbation_does_not_change_past[2026-09-10T15:02:00Z]
+FAILED tests/test_backtest_integrity.py::test_future_price_perturbation_does_not_change_past[2026-09-11T13:30:00Z]
+FAILED tests/test_backtest_integrity.py::test_future_price_perturbation_does_not_change_past[2026-09-14T19:00:00Z]
+FAILED tests/test_backtest_integrity.py::test_equity_is_cash_plus_holdings_rebuilt_from_fills
+FAILED tests/test_backtest_integrity.py::test_whole_shares_by_default - Attri...
+FAILED tests/test_backtest_integrity.py::test_fills_are_at_a_later_bar_open_never_the_signal_bar
+FAILED tests/test_backtest_integrity.py::test_flat_at_every_session_end_and_liquidation_is_costed
+FAILED tests/test_backtest_integrity.py::test_noncontiguous_panel_is_refused
+FAILED tests/test_backtest_integrity.py::test_zero_extra_stress_equals_base_and_cost_is_additive
+FAILED tests/test_backtest_integrity.py::test_four_cost_scenarios_are_ordered
+FAILED tests/test_backtest_integrity.py::test_audit_never_validates_a_strategy_profitable_only_under_optimistic_costs
+FAILED tests/test_backtest_integrity.py::test_audit_passes_cost_gate_only_when_conservative_is_positive
+FAILED tests/test_backtest_integrity.py::test_audit_missing_cost_scenarios_is_a_failure_not_a_skip
+FAILED tests/test_backtest_integrity.py::test_synthetic_panel_supports_more_than_six_symbols
+FAILED tests/test_backtest_integrity.py::test_default_capital_is_spec_25k - A...
+15 failed in 4.29s

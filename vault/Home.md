@@ -28,12 +28,12 @@ not append: superseded NOW text goes to a report under `Reports/`, linked from h
 
 | track | state |
 |---|---|
-| Quantum Impact | vision given (2026-10-10): QC-TRADE, imported to `impact/`; gaps to Qollab in [[Research/impact-qc-trade-fit]] (no Qiskit yet, Alpaca can't run on Qollab, licensed data can't be bundled) |
+| Quantum Impact | running (2026-10-10 17:00 ET): 5 agents — Qollab Qiskit project `impact-qollab/`, audit+backtest fixes, Qiskit QAOA + scaling, Alpaca data pipeline, page+video drafts (Plan rows 3–7). Spec: [[Design/impact-qc-trade-spec]] |
 | Quantum Playground | waiting on the owner's product vision |
 | Quantum Unlocked | waiting on the owner's product vision |
 | repo requirements | done: MIT, attribution, `templates/qollab-project/`, `scripts/gates/qollab-submission.mjs` on the board |
 
-**The org is paused (2026-10-10).** The five setup lanes were stopped and their branches archived to `/Users/udsy/agent-org/archive/lane-branches-2026-10-10.bundle`; GitHub holds only `main` and `backup/lane-state`. Once the owner gives the vision, research agents start, then the lanes are re-cut for three tracks.
+**The tmux org is not used for now (2026-10-10):** agents are dispatched directly by the overseer. The five setup lanes were stopped and their branches archived to `/Users/udsy/agent-org/archive/lane-branches-2026-10-10.bundle`; GitHub holds only `main` and `backup/lane-state`. Once the owner gives the vision, research agents start, then the lanes are re-cut for three tracks.
 
 ## Next 3 moves
 

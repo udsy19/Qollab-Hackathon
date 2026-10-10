@@ -3,26 +3,34 @@
   "synthetic_data": true,
   "data_source": "synthetic",
   "oos_sessions": 10,
-  "strategy_oos_total_return": -0.0151296520363661,
-  "spy_intraday_oos_total_return": -0.0120583050268441,
-  "arithmetic_total_return_difference": -0.003071347009522,
-  "strategy_oos_sharpe_zero_rf": -2.3019315362780475,
-  "strategy_oos_max_drawdown": -0.0363270960929316,
-  "strategy_oos_trading_cost_usd": 2090.167682908457,
+  "strategy_oos_total_return": -0.0250334389769028,
+  "spy_intraday_oos_total_return": -0.0135769468066655,
+  "arithmetic_total_return_difference": -0.0114564921702373,
+  "strategy_oos_sharpe_zero_rf": -3.802707041213008,
+  "strategy_oos_max_drawdown": -0.0413397031892536,
+  "strategy_oos_trading_cost_usd": 520.6752853249942,
   "paired_daily_excess_bootstrap_ci95_bps": [
     NaN,
     NaN
   ],
-  "strategy_net_return_at_5bps_slippage_per_side": -0.0347567036847665,
-  "milp_median_solver_seconds_largest_n": 0.0067191900000125,
-  "xy_qaoa_statevector_median_seconds_largest_n": 0.0575193030000491,
+  "strategy_net_return_at_5bps_extra_slippage_per_side": -0.0649558317955111,
+  "cost_scenario_oos_total_return": {
+    "optimistic": -0.011356908277638,
+    "base": -0.0250334389769028,
+    "conservative": -0.0472722069561999,
+    "severe_stress": -0.1252456748378072
+  },
+  "severe_stress_oos_total_return": -0.1252456748378072,
+  "milp_median_solver_seconds_largest_n": 0.0046897289939806,
+  "xy_qaoa_statevector_median_seconds_largest_n": 0.010997021003277,
   "gates": {
     "genuine_historical_input": false,
     "at_least_60_oos_sessions": false,
     "positive_oos_net_return": false,
     "higher_net_return_than_intraday_spy_baseline": false,
     "paired_bootstrap_95pct_lower_above_zero_bps_per_day": false,
-    "positive_return_with_5bps_slippage_per_side": false
+    "positive_return_with_5bps_extra_slippage_per_side": false,
+    "positive_oos_net_return_conservative_costs": false
   },
   "all_gates_passed": false,
   "quantum_advantage_established": false,
@@ -30,7 +38,7 @@
   "limitations": [
     "OOS holdout should be genuinely locked before hyperparameter and universe selection.",
     "A single backtest, even if positive, does not predict future returns.",
-    "Cost assumptions are modeled; quote-level slippage and paper-to-real fills differ.",
+    "Spread, slippage, impact and fill assumptions are MODELED from OHLCV bars, not observed quotes; quote-level slippage and paper-to-real fills differ.",
     "Bootstrap confidence intervals are exploratory; repeated strategy selection is multiple testing.",
     "QAOA is ideal classical statevector simulation, NOT quantum hardware speedup.",
     "No paper or live orders were placed."

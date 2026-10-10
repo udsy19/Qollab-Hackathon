@@ -1,0 +1,11 @@
+PYODIDE 314.0.7 | python 3.14.2
+Loading micropip, numpy, scipy
+Loaded micropip, numpy, scipy
+numpy 2.4.6 scipy 1.18.0
+stats from file data/etf_stats_synthetic.json: ['SPY', 'QQQ', 'IWM', 'DIA', 'TLT', 'GLD']
+  exact   OK  sel=['IWM', 'TLT'] E=0.005062 9.4 ms  extra=
+  milp    OK  sel=['IWM', 'TLT'] E=0.005062 45.8 ms  extra={'milp_gap': 0.0, 'milp_certified': True}
+  greedy  OK  sel=['IWM', 'TLT'] E=0.005062 1.0 ms  extra=
+  anneal  OK  sel=['IWM', 'TLT'] E=0.005062 40.5 ms  extra=
+micropip.install("qiskit>=2.5.2,<3.0.0"): FAILED: ValueError: Can't find a pure Python 3 wheel for 'qiskit<3.0.0,>=2.5.2'. | See: https://pyodide.org/en/stable/usage/faq.html#why-can-t-micropip-find-a-pure-python-wheel-for-a-package | You can use `await micropip.install(..., keep_going=True)` to get a list of all packages with missing wheels.
+PYODIDE-PROBE DONE

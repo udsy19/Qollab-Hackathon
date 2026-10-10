@@ -1,0 +1,39 @@
+  ok   Dicke |D(n,k)> exact for n=2..8, all k
+  ok   cost layer = exp(-i gamma x'Qx) up to global phase
+  ok   n=6 k=2: exactly ONE backend.run call
+  ok   n=6 k=2: the one job carries both QAOA circuits
+  ok   n=6 k=2: reported exact optimum = independent brute force
+  ok   n=6 k=2: every reported energy = x'Qx of its selection
+  ok   n=6 k=2: every reported gap = E - E(brute force)
+  ok   n=6 k=2: XY-mixer samples all feasible
+  ok   n=6 k=2: console warns the numbers are SYNTHETIC
+  ok   n=6 k=3: exactly ONE backend.run call
+  ok   n=6 k=3: the one job carries both QAOA circuits
+  ok   n=6 k=3: reported exact optimum = independent brute force
+  ok   n=6 k=3: every reported energy = x'Qx of its selection
+  ok   n=6 k=3: every reported gap = E - E(brute force)
+  ok   n=6 k=3: XY-mixer samples all feasible
+  ok   n=6 k=3: console warns the numbers are SYNTHETIC
+  ok   n=5 k=2: exactly ONE backend.run call
+  ok   n=5 k=2: the one job carries both QAOA circuits
+  ok   n=5 k=2: reported exact optimum = independent brute force
+  ok   n=5 k=2: every reported energy = x'Qx of its selection
+  ok   n=5 k=2: every reported gap = E - E(brute force)
+  ok   n=5 k=2: XY-mixer samples all feasible
+  ok   n=5 k=2: console warns the numbers are SYNTHETIC
+  ok   n=8 k=4: exactly ONE backend.run call
+  ok   n=8 k=4: the one job carries both QAOA circuits
+  ok   n=8 k=4: reported exact optimum = independent brute force
+  ok   n=8 k=4: every reported energy = x'Qx of its selection
+  ok   n=8 k=4: every reported gap = E - E(brute force)
+  ok   n=8 k=4: XY-mixer samples all feasible
+  ok   n=8 k=4: console warns the numbers are SYNTHETIC
+  ok   n=8 k=4: exactly ONE backend.run call
+  ok   n=8 k=4: the one job carries both QAOA circuits
+  ok   n=8 k=4: reported exact optimum = independent brute force
+  ok   n=8 k=4: every reported energy = x'Qx of its selection
+  ok   n=8 k=4: every reported gap = E - E(brute force)
+  ok   n=8 k=4: XY-mixer samples all feasible
+  ok   n=8 k=4: console warns the numbers are SYNTHETIC
+  ok   at least one NON-zero gap was checked (else the gap check is vacuous)
+IMPACT-QOLLAB-RUN PASS
