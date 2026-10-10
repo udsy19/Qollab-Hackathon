@@ -17,7 +17,7 @@ bytes of each note, and fails if it stops being true.
 > next reader can find it. Delete it and nothing but navigation is lost; regenerate it
 > with `node scripts/vault-hubs.mjs`.
 
-Measured 2026-10-10: **40 notes** over 10 folders.
+Measured 2026-10-10: **41 notes** over 10 folders.
 
 
 ## Start here — the vault root
@@ -81,6 +81,7 @@ Folder README: [[Reports/README]]
 - [[Reports/impact-qollab-qaoa|Impact track: the Qollab project impact-qollab/ (QAOA in Qiskit vs classical solvers)]]
 - [[Reports/impact-research-audit|Impact — QC-TRADE audit and backtest correctness fixes (Plan row 4)]]
 - [[Reports/impact-research-data|Impact: the read-only Alpaca historical-data pipeline (research-data)]]
+- [[Reports/impact-research-solvers|Impact: quantum vs classical solvers for QC-TRADE's Stage A, and how they scale (plan row 5)]]
 
 ## `Reports/audits/`
 

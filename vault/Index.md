@@ -12,7 +12,7 @@ updated: 2026-10-10
 > [!note] Signpost only.
 > Every line is the note's own first sentence, unedited. Nothing here is a new claim; if a line reads oddly, the note says it oddly.
 
-Measured 2026-10-10: **26 notes** carrying an answer.
+Measured 2026-10-10: **27 notes** carrying an answer.
 
 ## Promoted lessons — from the lanes
 
@@ -29,10 +29,11 @@ Decisions are law until superseded. Everything else describes; these DECIDE.
 | [[0001-vault-is-mission-control]] | D-0001 — The vault lives in the repo and is mission control | current |  |
 | [[decision]] | D-XXXX — <title> | proposed |  |
 
-## Reports — what was measured  (4)
+## Reports — what was measured  (5)
 
 | note | title | status | date | gist |
 |---|---|---|---|---|
+| [[impact-research-solvers]] | Impact: quantum vs classical solvers for QC-TRADE's Stage  | current | 2026-10-10 | Spec sections 5 and 9 (Design/impact-qc-trade-spec) on branch `worktree-agent-af390822910e72793`. The instances are **sy |
 | [[impact-research-data]] | Impact: the read-only Alpaca historical-data pipeline (res | current | 2026-10-10 | `pilot` (from 2026-04-01) is the window `scripts/run_research.sh pilot` backtests. Output: `impact/data/alpaca_<mode>_si |
 | [[impact-research-audit]] | Impact — QC-TRADE audit and backtest correctness fixes (Pl | current | 2026-10-10 | 1. **Share/cash ledger** replaces weight-drift NAV. Fills happen at the bar open, sells before buys, and buys are capped |
 | [[impact-qollab-qaoa]] | Impact track: the Qollab project `impact-qollab/` (QAOA in | current | 2026-10-10 | `impact-qollab/` is a Qollab Python project that builds a k-of-n portfolio-selection QUBO on six SYNTHETIC ETFs, tunes t |

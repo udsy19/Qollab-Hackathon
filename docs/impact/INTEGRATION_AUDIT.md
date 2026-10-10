@@ -63,3 +63,17 @@ Branch `worktree-agent-ab34ad640e652b34d`, last commit `4a44651` (it had already
 | no credentials in source or outputs | `git grep` for the key prefixes on `HEAD`; the manifest records `credentials_recorded: false` | none found |
 
 Audit items O5–O7 (relayed to this agent while it ran) are fixed with tests: per-row timezone validation, an explicit configurable session-completeness policy with per-symbol rejection reasons and a selection-bias check, and distinct messages for connection, 401, 403, 429 and 5xx failures.
+
+## research-solvers → `impact/` optimisation side (Plan row 5)
+
+Branch `worktree-agent-af390822910e72793`, last commit `0987166`, worktree clean. It branched before the audit and data merges, so it was merged in a separate temporary worktree (branch `integrate/solvers`) while a real-data backtest ran from the main checkout. Conflicts: `impact/pyproject.toml` (both sides added dependencies; resolved as the union: pyarrow, qiskit 2.5.2, qiskit-aer 0.17.2) and the generated vault pages (regenerated).
+
+| check | command | result |
+|---|---|---|
+| full QC-TRADE suite on the merged tree (overseer's own run) | `cd impact && python -m pytest -q -p no:cacheprovider` | `136 passed in 16.03s`, exit 0 (28 original + audit/data + 54 solver tests) |
+| every module imports after the merge | `python -c "import qc_trade.cli, qc_trade.backtest, qc_trade.benchmark, qc_trade.optimizer, qc_trade.qaoa, qc_trade.scaling, qc_trade.fetch, qc_trade.dataset, qc_trade.audit, qc_trade.demo"` | OK |
+| no caller of a deleted function | `grep` for the old NumPy QAOA names | they remain as wrappers over the Qiskit QAOA; no dangling reference |
+| the solver tests can fail | agent's sabotage matrix, `evidence/impact-research-solvers/sabotage.log` | 18 of 18 red |
+| scaling study | agent's run, `impact/outputs/scaling/` | 537 solves, 0 errors, N = 6..100 |
+
+Equivalence: all solvers optimise the same QUBO; the X-mixer QAOA uses a cardinality penalty instead of the hard constraint, at the smallest weight that provably keeps the same optimum (brute-force tested). Audit items O1–O4 are fixed: every QAOA row carries a uniform random k-hot sampler with the same 1,024 shots and the approximation ratio; one shared enumeration cap; a MILP time-out is recorded, not a crash.

@@ -1,0 +1,22 @@
+regime,n,k,method,reason
+trading,30,3,qaoa,statevector needs 2^30 x 16 B = 17.2 GB (one copy) > 4 GB budget
+trading,30,3,qaoa_xy,statevector needs 2^30 x 16 B = 17.2 GB (one copy) > 4 GB budget
+trading,30,3,full_exact,"C(30,3)=4.06e+03 SLSQP refinements exceeds the 2000 cap"
+trading,50,3,qaoa,statevector needs 2^50 x 16 B = 1.8e+07 GB (one copy) > 4 GB budget
+trading,50,3,qaoa_xy,statevector needs 2^50 x 16 B = 1.8e+07 GB (one copy) > 4 GB budget
+trading,50,3,full_exact,"C(50,3)=1.96e+04 SLSQP refinements exceeds the 2000 cap"
+trading,100,3,qaoa,statevector needs 2^100 x 16 B = 2.03e+22 GB (one copy) > 4 GB budget
+trading,100,3,qaoa_xy,statevector needs 2^100 x 16 B = 2.03e+22 GB (one copy) > 4 GB budget
+trading,100,3,full_exact,"C(100,3)=1.62e+05 SLSQP refinements exceeds the 2000 cap"
+hard,20,4,full_exact,"C(20,4)=4.84e+03 SLSQP refinements exceeds the 2000 cap"
+hard,30,6,qaoa,statevector needs 2^30 x 16 B = 17.2 GB (one copy) > 4 GB budget
+hard,30,6,qaoa_xy,statevector needs 2^30 x 16 B = 17.2 GB (one copy) > 4 GB budget
+hard,30,6,full_exact,"C(30,6)=5.94e+05 SLSQP refinements exceeds the 2000 cap"
+hard,50,10,exact_qubo,"C(50,10)=1.03e+10 supports exceeds the 1e+06 enumeration cap"
+hard,50,10,qaoa,statevector needs 2^50 x 16 B = 1.8e+07 GB (one copy) > 4 GB budget
+hard,50,10,qaoa_xy,statevector needs 2^50 x 16 B = 1.8e+07 GB (one copy) > 4 GB budget
+hard,50,10,full_exact,"C(50,10)=1.03e+10 SLSQP refinements exceeds the 2000 cap"
+hard,100,20,exact_qubo,"C(100,20)=5.36e+20 supports exceeds the 1e+06 enumeration cap"
+hard,100,20,qaoa,statevector needs 2^100 x 16 B = 2.03e+22 GB (one copy) > 4 GB budget
+hard,100,20,qaoa_xy,statevector needs 2^100 x 16 B = 2.03e+22 GB (one copy) > 4 GB budget
+hard,100,20,full_exact,"C(100,20)=5.36e+20 SLSQP refinements exceeds the 2000 cap"
