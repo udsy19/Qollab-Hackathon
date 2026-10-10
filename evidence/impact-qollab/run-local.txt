@@ -1,0 +1,46 @@
+====================================================================================================
+Portfolio Selection by QAOA: a skeptical benchmark  (Qiskit 2.5.2, backend: basic_simulator)
+====================================================================================================
+DATA: SYNTHETIC: seeded simulation, not market data  [file data/etf_stats_synthetic.json]
+      These numbers are SYNTHETIC. No result below is a market result or investment advice.
+PROBLEM: choose k=2 of n=6 ETFs ['SPY', 'QQQ', 'IWM', 'DIA', 'TLT', 'GLD']; risk aversion 6.0; 15 feasible portfolios of 64 bitstrings.
+         QUBO E(y) = -mu'y/k + (gamma/2k^2) y'Cov y + turnover cost; lower is better. Built in 0.02 ms.
+  SPY: mu=+0.052 vol=0.176  QQQ: mu=+0.040 vol=0.227  IWM: mu=+0.103 vol=0.249  DIA: mu=+0.051 vol=0.163  TLT: mu=-0.011 vol=0.151  GLD: mu=+0.015 vol=0.148
+
+QAOA: tuning angles locally with Qiskit Statevector (reps=2, 3 COBYLA starts, <= 120 iterations each). This sends no jobs.
+   X mixer: 360 statevector evaluations in 0.44 s; ideal feasible probability 0.596
+  XY mixer: 360 statevector evaluations in 0.62 s; ideal feasible probability 1.000
+   X circuit after transpile: 6 qubits, depth 19, 30 two-qubit gates, 55 operations
+  XY circuit after transpile: 6 qubits, depth 67, 65 two-qubit gates, 102 operations
+Sending ONE job with both circuits (1024 shots each) to basic_simulator ...
+  job finished in 0.00 s (shared by both circuits)
+
+RESULTS on one instance (stage A: QUBO selection). gap = E - E(exact); 0 means the certified optimum.
+  solver                 selection            QUBO E feasible         gap  rel.gap    time ms  notes
+  exact enumeration      IWM+TLT             0.00506 yes          0.00000    0.00%        0.1  
+  MILP (HiGHS)           IWM+TLT             0.00506 yes          0.00000    0.00%        5.5  certified
+  greedy + local swap    IWM+TLT             0.00506 yes          0.00000    0.00%        0.1  
+  simulated annealing    IWM+TLT             0.00506 yes          0.00000    0.00%       12.4  
+  QAOA X mixer + penalty IWM+TLT             0.00506 60.3%        0.00000    0.00%      442.8  best of 1024 shots; P(optimum) sampled 0.040, ideal 0.040; most frequent QQQ+TLT
+  QAOA XY mixer          IWM+TLT             0.00506 100.0%       0.00000    0.00%      627.6  best of 1024 shots; P(optimum) sampled 0.141, ideal 0.119; most frequent DIA+GLD
+  baseline: a uniformly random k-subset is optimal with probability 1/C(6,2) = 0.067; a uniformly random bitstring is a feasible optimum with probability 1/2^6 = 0.0156.
+  QAOA time = local angle tuning (classical simulation) + half the shared transpile and job time. It is NOT a
+  quantum hardware runtime, and no quantum speedup is claimed or measured here.
+
+STAGE B (continuous sizing by SLSQP on the chosen support; weights in [3%, 80%], fully invested):
+  exact enumeration      objective +0.005052  (+0.000713 vs best support)  weights {'IWM': 0.4943, 'TLT': 0.5057}
+  MILP (HiGHS)           objective +0.005052  (+0.000713 vs best support)  weights {'IWM': 0.4943, 'TLT': 0.5057}
+  greedy + local swap    objective +0.005052  (+0.000713 vs best support)  weights {'IWM': 0.4943, 'TLT': 0.5057}
+  simulated annealing    objective +0.005052  (+0.000713 vs best support)  weights {'IWM': 0.4943, 'TLT': 0.5057}
+  QAOA X mixer + penalty objective +0.005052  (+0.000713 vs best support)  weights {'IWM': 0.4943, 'TLT': 0.5057}
+  QAOA XY mixer          objective +0.005052  (+0.000713 vs best support)  weights {'IWM': 0.4943, 'TLT': 0.5057}
+  best over ALL 15 supports: objective +0.004339 on DIA+TLT (2 ms). The QUBO scores equal weights, so its optimum need not be the best after sizing.
+
+VERDICT (computed from the table above, this instance only):
+  classical solvers reaching the optimum: 4 of 4, slowest 12.4 ms.
+  QAOA X mixer + penalty: best sample IS the optimum; 60.3% of shots feasible; P(optimum) 0.040 vs 0.067 for a random k-subset; 0.44 s.
+  QAOA XY mixer: best sample IS the optimum; 100.0% of shots feasible; P(optimum) 0.141 vs 0.067 for a random k-subset; 0.63 s.
+  At this size exhaustive search is trivial, so QAOA cannot beat exhaustive search here; the question this run
+  answers is how much probability QAOA puts on the optimum, and at what cost, against honest baselines.
+
+Total run time 1.1 s. Jobs sent to the backend: 1.
